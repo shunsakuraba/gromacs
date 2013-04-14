@@ -803,7 +803,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     /* Determine md=-dV/dr and dd=d^2V/dr^2 */
     md_el = 0;
     dd_el = 0;
-    if (ir->coulombtype == eelCUT || EEL_RF(ir->coulombtype))
+    if (ir->coulombtype == eelCUT || EEL_RF(ir->coulombtype) || EEL_ZD(ir->coulombtype))
     {
         real eps_rf, k_rf;
 
@@ -811,6 +811,12 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
         {
             eps_rf = 1;
             k_rf   = 0;
+        }
+        else if (EEL_ZD(ir->coulombtype))
+        {
+	    /* FIXME: implement correct estimation for zd with alpha != 0 */
+            eps_rf = 1;
+            k_rf   = pow(ir->rcoulomb, -3.0);
         }
         else
         {

@@ -235,6 +235,9 @@ typedef struct {
     /* Constants for reaction fields */
     real kappa, k_rf, c_rf;
 
+    /* Constants for zero-dipole method */
+    real zd_alpha, zd_b, zd_c;
+
     /* Charge sum and dipole for topology A/B ([0]/[1]) for Ewald corrections */
     double qsum[2];
     double q2sum[2];

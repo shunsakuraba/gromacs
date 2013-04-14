@@ -827,6 +827,7 @@ void pr_inputrec(FILE *fp, int indent, const char *title, t_inputrec *ir,
         {
             PS("epsilon-rf", infbuf);
         }
+        PR("zd-alpha", ir->zd_alpha);
         PR("tabext", ir->tabext);
         PS("implicit-solvent", EIMPLICITSOL(ir->implicit_solvent));
         PS("gb-algorithm", EGBALGORITHM(ir->gb_algorithm));

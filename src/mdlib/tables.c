@@ -77,6 +77,7 @@ enum {
     etabCOULEncad,
     etabEXPMIN,
     etabUSER,
+    etabZD,
     etabNR
 };
 
@@ -111,7 +112,8 @@ static const t_tab_props tprops[etabNR] = {
     { "LJ12-Encad shift", FALSE },
     { "COUL-Encad shift",  TRUE },
     { "EXPMIN", FALSE },
-    { "USER", FALSE }
+    { "USER", FALSE },
+    { "Zero-Dipole", TRUE }
 };
 
 /* Index in the table that says which function to use */
@@ -143,18 +145,38 @@ static double v_ewald_lr(double beta, double r)
     }
 }
 
-void table_spline3_fill_ewald_lr(real  *table_f,
-                                 real  *table_v,
-                                 real  *table_fdv0,
-                                 int    ntab,
-                                 double dx,
-                                 real   beta)
+static double v_zd_lr(double beta, double b, double c, double rc, double r)
+{
+    if (r == 0)
+    {
+        return c + beta*2/sqrt(M_PI);
+    }
+    else if (r >= rc)
+    {
+         return 1.0 / r;
+    }
+    else
+    {
+      /* Note: this corresponds to the negative NB energy. See nbnxn implementation for details. */
+      return gmx_erfd(beta*r)/r - b * r * r + c;
+    }
+}
+
+/* This routine handles both Ewald and ZD */
+void table_spline3_fill_ewald_lr(real *table_f,
+                                 real *table_v,
+                                 real *table_fdv0,
+                                 int   ntab,
+                                 real  dx,
+                                 gmx_bool is_ewald,
+                                 real  beta, 
+                                 real b, real c, real rc)
 {
     real     tab_max;
     int      i, i_inrange;
     double   dc, dc_new;
     gmx_bool bOutOfRange;
-    double   v_r0, v_r1, v_inrange, vi, a0, a1, a2dx;
+    double   v_r0, v_r1, v_inrange, vi, a0, a1, a2dx, av;
     double   x_r0;
 
     if (ntab < 2)
@@ -182,7 +204,11 @@ void table_spline3_fill_ewald_lr(real  *table_f,
     {
         x_r0 = i*dx;
 
-        v_r0 = v_ewald_lr(beta, x_r0);
+	if(is_ewald) {
+	  v_r0 = v_ewald_lr(beta, x_r0);
+	}else{
+	  v_r0 = v_zd_lr(beta, b, c, rc, x_r0);
+	}
 
         if (!bOutOfRange)
         {
@@ -208,7 +234,11 @@ void table_spline3_fill_ewald_lr(real  *table_f,
         }
 
         /* Get the potential at table point i-1 */
-        v_r1 = v_ewald_lr(beta, (i-1)*dx);
+	if(is_ewald) {
+	  v_r1 = v_ewald_lr(beta, (i-1)*dx);
+	}else{
+	  v_r1 = v_zd_lr(beta, b, c, rc, (i-1)*dx);
+	}
 
         if (v_r1 != v_r1 || v_r1 < -tab_max || v_r1 > tab_max)
         {
@@ -220,7 +250,13 @@ void table_spline3_fill_ewald_lr(real  *table_f,
             /* Calculate the average second derivative times dx over interval i-1 to i.
              * Using the function values at the end points and in the middle.
              */
-            a2dx = (v_r0 + v_r1 - 2*v_ewald_lr(beta, x_r0-0.5*dx))/(0.25*dx);
+	  if(is_ewald) {
+	    av = v_ewald_lr(beta, x_r0-0.5*dx);
+	  }else{
+	    av = v_zd_lr(beta, b, c, rc, x_r0-0.5*dx);
+	  }
+	  
+            a2dx = (v_r0 + v_r1 - 2*av)/(0.25*dx);
             /* Set the derivative of the spline to match the difference in potential
              * over the interval plus the average effect of the quadratic term.
              * This is the essential step for minimizing the error in the force.
@@ -1016,6 +1052,22 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
                     Ftab = 0;
                 }
                 break;
+            case etabZD:
+                if(r < rc) {
+                    Vtab  = gmx_erfc(fr->zd_alpha * r) / r - gmx_erfc(fr->zd_alpha * rc) / rc + fr->zd_b * (r * r - rc * rc);
+                    Ftab = gmx_erfc(fr->zd_alpha * r) / r2 + fr->zd_alpha * M_2_SQRTPI * exp(- fr->zd_alpha*fr->zd_alpha * r2) / r - 2 * fr->zd_b * r;
+                }
+                else
+                {
+                    Vtab = 0;
+                    Ftab = 0;
+                }
+        if (debug)
+        {
+	  fprintf(debug, "etabZD at %g: V=%g, F=%g\n", r, Vtab, Ftab);
+        }
+
+	        break;
             case etabEXPMIN:
                 expr  = exp(-r);
                 Vtab  = expr;
@@ -1082,6 +1134,11 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
     {
         td->v[i] = td->v[i+1] + td->f[i+1]*(td->x[i+1] - td->x[i]);
         td->f[i] = td->f[i+1];
+        if (debug && tp == etabZD)
+        {
+	  fprintf(debug, "etabZD extra %d: V=%g, F=%g\n", i, td->v[i], td->f[i]);
+        }
+
     }
 
 #ifdef DEBUG_SWITCH
@@ -1158,6 +1215,9 @@ static void set_table_type(int tabsel[], const t_forcerec *fr, gmx_bool b14only)
             break;
         case eelRF_ZERO:
             tabsel[etiCOUL] = etabRF_ZERO;
+            break;
+        case eelZD:
+            tabsel[etiCOUL] = etabZD;
             break;
         case eelSWITCH:
             tabsel[etiCOUL] = etabCOULSwitch;

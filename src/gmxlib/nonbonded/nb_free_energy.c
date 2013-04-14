@@ -200,7 +200,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
         vdw_swV3 = vdw_swV4 = vdw_swV5 = vdw_swF2 = vdw_swF3 = vdw_swF4 = 0.0;
     }
 
-    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO;
+    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || EEL_ZD(fr->eeltype);
     bExactVdwCutoff     = (fr->vdw_modifier != eintmodNONE);
 
     /* For Ewald/PME interactions we cannot easily apply the soft-core component to

@@ -165,7 +165,7 @@ gmx_nb_generic_adress_kernel(t_nblist *                nlist,
         vdw_swV3 = vdw_swV4 = vdw_swV5 = vdw_swF2 = vdw_swF3 = vdw_swF4 = 0.0;
     }
 
-    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO;
+    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || EEL_ZD(fr->eeltype);
     bExactVdwCutoff     = (fr->vdw_modifier != eintmodNONE);
     bExactCutoff        = bExactElecCutoff || bExactVdwCutoff;
 

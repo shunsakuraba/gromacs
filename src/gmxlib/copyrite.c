@@ -618,7 +618,12 @@ void please_cite(FILE *fp, const char *key)
           "Garmay Yu, Shvetsov A, Karelov D, Lebedev D, Radulescu A, Petukhov M, Isaev-Ivanov V",
           "Correlated motion of protein subdomains and large-scale conformational flexibility of RecA protein filament",
           "Journal of Physics: Conference Series",
-          340, 2012, "012094" }
+          340, 2012, "012094" },
+	{ "Fukuda2011",
+          "Fukuda Ikuo, Yonezawa Yasushige, Nakamura Haruki",
+          "Molecular dynamics scheme for precise estimation of electrostatic interaction via zero-dipole summation principle",
+          "Journal of Chemical Physics",
+	  134, 2011, "164107" },
     };
 #define NSTR (int)asize(citedb)
 

@@ -72,7 +72,7 @@
  * This ensures that there will not be different tpx formats around which
  * can not be distinguished.
  */
-static const char *tpx_tag = TPX_TAG_RELEASE;
+static const char *tpx_tag = "zerodipole";
 
 /* This number should be increased whenever the file format changes! */
 static const int tpx_version = 83;
@@ -892,6 +892,7 @@ static void do_inputrec(t_fileio *fio, t_inputrec *ir, gmx_bool bRead,
             ir->epsilon_rf = 1.0;
         }
     }
+    gmx_fio_do_real(fio, ir->zd_alpha);
     if (file_version >= 29)
     {
         gmx_fio_do_real(fio, ir->tabext);

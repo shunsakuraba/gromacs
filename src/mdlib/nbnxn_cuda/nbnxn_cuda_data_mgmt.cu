@@ -287,7 +287,7 @@ static void init_nbparam(cu_nbparam_t *nbp,
     {
         nbp->eeltype = eelCuRF;
     }
-    else if ((EEL_PME(ic->eeltype) || ic->eeltype==eelEWALD))
+    else if ((EEL_PME(ic->eeltype) || ic->eeltype==eelEWALD || ic->eeltype == eelZD))
     {
         /* Initially rcoulomb == rvdw, so it's surely not twin cut-off. */
         nbp->eeltype = pick_ewald_kernel_type(false, dev_info);
