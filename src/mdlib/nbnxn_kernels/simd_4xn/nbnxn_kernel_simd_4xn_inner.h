@@ -60,7 +60,7 @@
  * With gcc this is slower, except for RF on Sandy Bridge.
  * Tested with gcc 4.6.2, 4.6.3 and 4.7.1.
  */
-#if (defined CALC_COUL_RF || defined CALC_COUL_TAB) && (!defined __GNUC__ || (defined CALC_COUL_RF && defined GMX_X86_AVX_256))
+#if (defined CALC_COUL_RF || defined CALC_COUL_ZQ || defined CALC_COUL_TAB) && (!defined __GNUC__ || ((defined CALC_COUL_RF || defined CALC_COUL_ZQ) && defined GMX_X86_AVX_256))
 #define NBNXN_CUTOFF_USE_BLENDV
 #endif
 /* With analytical Ewald we replace cmp+and+and with sub+blendv+blendv.
@@ -528,6 +528,21 @@
     vcoul_S1    = gmx_mul_pr(qq_S1, gmx_add_pr(rinv_ex_S1, gmx_add_pr(gmx_mul_pr(rsq_S1, hrc_3_S), moh_rc_S)));
     vcoul_S2    = gmx_mul_pr(qq_S2, gmx_add_pr(rinv_ex_S2, gmx_add_pr(gmx_mul_pr(rsq_S2, hrc_3_S), moh_rc_S)));
     vcoul_S3    = gmx_mul_pr(qq_S3, gmx_add_pr(rinv_ex_S3, gmx_add_pr(gmx_mul_pr(rsq_S3, hrc_3_S), moh_rc_S)));
+#endif
+#endif
+
+#ifdef CALC_COUL_ZQ
+    /* Electrostatic interactions */
+    frcoul_S0   = gmx_mul_pr(qq_S0, gmx_madd_pr(rsq_S0, gmx_madd_pr(rsq_S0, mzq_5_S, mzq_3_S), rinv_ex_S0));
+    frcoul_S1   = gmx_mul_pr(qq_S1, gmx_madd_pr(rsq_S1, gmx_madd_pr(rsq_S1, mzq_5_S, mzq_3_S), rinv_ex_S1));
+    frcoul_S2   = gmx_mul_pr(qq_S2, gmx_madd_pr(rsq_S2, gmx_madd_pr(rsq_S2, mzq_5_S, mzq_3_S), rinv_ex_S2));
+    frcoul_S3   = gmx_mul_pr(qq_S3, gmx_madd_pr(rsq_S3, gmx_madd_pr(rsq_S3, mzq_5_S, mzq_3_S), rinv_ex_S3));
+
+#ifdef CALC_ENERGIES
+    vcoul_S0    = gmx_mul_pr(qq_S0, gmx_add_pr(rinv_ex_S0, gmx_madd_pr(rsq_S0, gmx_madd_pr(rsq_S0, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S1    = gmx_mul_pr(qq_S1, gmx_add_pr(rinv_ex_S1, gmx_madd_pr(rsq_S1, gmx_madd_pr(rsq_S1, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S2    = gmx_mul_pr(qq_S2, gmx_add_pr(rinv_ex_S2, gmx_madd_pr(rsq_S2, gmx_madd_pr(rsq_S2, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S3    = gmx_mul_pr(qq_S3, gmx_add_pr(rinv_ex_S3, gmx_madd_pr(rsq_S3, gmx_madd_pr(rsq_S3, hzq_5_S, hzq_3_S), moh_zq_S)));
 #endif
 #endif
 

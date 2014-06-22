@@ -102,7 +102,7 @@ enum eintmod {
 enum {
     eelCUT,     eelRF,     eelGRF,   eelPME,  eelEWALD,  eelP3M_AD,
     eelPOISSON, eelSWITCH, eelSHIFT, eelUSER, eelGB_NOTUSED, eelRF_NEC, eelENCADSHIFT,
-    eelPMEUSER, eelPMESWITCH, eelPMEUSERSWITCH, eelRF_ZERO, eelZD, eelNR
+    eelPMEUSER, eelPMESWITCH, eelPMEUSERSWITCH, eelRF_ZERO, eelZD, eelZQ, eelNR
 };
 
 /* Ewald geometry */
@@ -415,6 +415,7 @@ enum gmx_nbkernel_elec
     GMX_NBKERNEL_ELEC_CUBICSPLINETABLE,
     GMX_NBKERNEL_ELEC_GENERALIZEDBORN,
     GMX_NBKERNEL_ELEC_EWALD,
+    GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE,
     GMX_NBKERNEL_ELEC_NR
 };
 

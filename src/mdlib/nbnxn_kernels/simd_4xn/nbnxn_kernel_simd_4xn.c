@@ -64,7 +64,7 @@
 /*! \brief Kinds of electrostatic treatments in SIMD Verlet kernels
  */
 enum {
-    coultRF, coultTAB, coultTAB_TWIN, coultEWALD, coultEWALD_TWIN, coultNR
+    coultRF, coultZQ, coultTAB, coultTAB_TWIN, coultEWALD, coultEWALD_TWIN, coultNR
 };
 
 /* Declare and define the kernel function pointer lookup tables. */
@@ -74,6 +74,11 @@ static p_nbk_func_ener p_nbk_ener[coultNR][ljcrNR] =
         nbnxn_kernel_simd_4xn_rf_comb_geom_ener,
         nbnxn_kernel_simd_4xn_rf_comb_lb_ener,
         nbnxn_kernel_simd_4xn_rf_comb_none_ener,
+    },
+    {
+        nbnxn_kernel_simd_4xn_zq_comb_geom_ener,
+        nbnxn_kernel_simd_4xn_zq_comb_lb_ener,
+        nbnxn_kernel_simd_4xn_zq_comb_none_ener,
     },
     {
         nbnxn_kernel_simd_4xn_tab_comb_geom_ener,
@@ -105,6 +110,11 @@ static p_nbk_func_ener p_nbk_energrp[coultNR][ljcrNR] =
         nbnxn_kernel_simd_4xn_rf_comb_none_energrp,
     },
     {
+        nbnxn_kernel_simd_4xn_zq_comb_geom_energrp,
+        nbnxn_kernel_simd_4xn_zq_comb_lb_energrp,
+        nbnxn_kernel_simd_4xn_zq_comb_none_energrp,
+    },
+    {
         nbnxn_kernel_simd_4xn_tab_comb_geom_energrp,
         nbnxn_kernel_simd_4xn_tab_comb_lb_energrp,
         nbnxn_kernel_simd_4xn_tab_comb_none_energrp,
@@ -132,6 +142,11 @@ static p_nbk_func_noener p_nbk_noener[coultNR][ljcrNR] =
         nbnxn_kernel_simd_4xn_rf_comb_geom_noener,
         nbnxn_kernel_simd_4xn_rf_comb_lb_noener,
         nbnxn_kernel_simd_4xn_rf_comb_none_noener,
+    },
+    {
+        nbnxn_kernel_simd_4xn_zq_comb_geom_noener,
+        nbnxn_kernel_simd_4xn_zq_comb_lb_noener,
+        nbnxn_kernel_simd_4xn_zq_comb_none_noener,
     },
     {
         nbnxn_kernel_simd_4xn_tab_comb_geom_noener,
@@ -226,6 +241,10 @@ nbnxn_kernel_simd_4xn(nbnxn_pairlist_set_t       *nbl_list,
     if (EEL_RF(ic->eeltype) || ic->eeltype == eelCUT)
     {
         coult = coultRF;
+    }
+    else if(ic->eeltype == eelZQ)
+    {
+        coult = coultZQ;
     }
     else
     {

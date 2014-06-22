@@ -120,6 +120,7 @@ FileHeader = \
 # nbnxn_kernel_simd_template.c.pre
 ElectrostaticsDict = collections.OrderedDict()
 ElectrostaticsDict['rf'] = { 'define' : '#define CALC_COUL_RF' }
+ElectrostaticsDict['zq'] = { 'define' : '#define CALC_COUL_ZQ' }
 ElectrostaticsDict['tab'] = { 'define' : '#define CALC_COUL_TAB' }
 ElectrostaticsDict['tab_twin'] = { 'define' : '#define CALC_COUL_TAB\n#define VDW_CUTOFF_CHECK /* Use twin-range cut-off */' }
 ElectrostaticsDict['ewald'] = { 'define' : '#define CALC_COUL_EWALD' }

@@ -67,7 +67,7 @@ extern "C" {
  *  nbnxn_cuda.cu by the nb_default_kfunc_ptr and nb_legacy_kfunc_ptr arrays
  *  should match the order of enumerated types below. */
 enum {
-    eelCuCUT, eelCuRF, eelCuEWALD_TAB, eelCuEWALD_TAB_TWIN, eelCuEWALD_ANA, eelCuEWALD_ANA_TWIN, eelCuNR
+    eelCuCUT, eelCuRF, eelCuZQ, eelCuEWALD_TAB, eelCuEWALD_TAB_TWIN, eelCuEWALD_ANA, eelCuEWALD_ANA_TWIN, eelCuNR
 };
 
 /*! Kernel flavors with different set of optimizations: default for CUDA <=v4.1
@@ -130,6 +130,8 @@ struct cu_nbparam
 
     float    epsfac;         /* charge multiplication factor                 */
     float    c_rf, two_k_rf; /* Reaction-Field constants                     */
+    float    c_zq, two_k2_zq, four_k4_zq;
+                             /* Reaction-Field constants                     */
     float    ewald_beta;     /* Ewald/PME parameter                          */
     float    sh_ewald;       /* Ewald/PME  correction term                   */
     float    rvdw_sq;        /* VdW cut-off                                  */

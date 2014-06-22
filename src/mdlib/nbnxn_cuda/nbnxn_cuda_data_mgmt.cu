@@ -125,7 +125,7 @@ static void init_ewald_coulomb_force_table(cu_nbparam_t          *nbp,
     pmalloc((void**)&ftmp, tabsize*sizeof(*ftmp));
 
     table_spline3_fill_ewald_lr(ftmp, NULL, NULL, tabsize,
-                                1/tabscale, nbp->ewald_beta);
+                                1/tabscale, TRUE, nbp->ewald_beta, 0.0, 0.0, 0.0);
 
     /* If the table pointer == NULL the table is generated the first time =>
        the array pointer will be saved to nbparam and the texture is bound.
@@ -274,6 +274,9 @@ static void init_nbparam(cu_nbparam_t *nbp,
     nbp->epsfac     = ic->epsfac;
     nbp->two_k_rf   = 2.0 * ic->k_rf;
     nbp->c_rf       = ic->c_rf;
+    nbp->two_k2_zq  = 2.0 * ic->k_zq_2;
+    nbp->four_k4_zq = 4.0 * ic->k_zq_4;
+    nbp->c_zq       = ic->c_zq;
     nbp->rvdw_sq    = ic->rvdw * ic->rvdw;
     nbp->rcoulomb_sq= ic->rcoulomb * ic->rcoulomb;
     nbp->rlist_sq   = ic->rlist * ic->rlist;
@@ -286,6 +289,10 @@ static void init_nbparam(cu_nbparam_t *nbp,
     else if (EEL_RF(ic->eeltype))
     {
         nbp->eeltype = eelCuRF;
+    }
+    else if (ic->eeltype == eelZQ)
+    {
+        nbp->eeltype = eelCuZQ;
     }
     else if ((EEL_PME(ic->eeltype) || ic->eeltype==eelEWALD || ic->eeltype == eelZD))
     {

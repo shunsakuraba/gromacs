@@ -722,6 +722,10 @@ static void do_nb_verlet(t_forcerec *fr,
     {
         enr_nbnxn_kernel_ljc = eNR_NBNXN_LJ_RF;
     }
+    else if (ic->eeltype == eelZQ)
+    {
+        enr_nbnxn_kernel_ljc = eNR_NBNXN_LJ_ZQ;
+    }
     else if ((!bCUDA && nbvg->ewald_excl == ewaldexclAnalytical) ||
              (bCUDA && nbnxn_cuda_is_kernel_ewald_analytical(fr->nbv->cu_nbv)) ||
              (ic->eeltype == eelZD))

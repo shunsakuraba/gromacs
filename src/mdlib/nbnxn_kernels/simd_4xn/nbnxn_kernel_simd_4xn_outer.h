@@ -107,9 +107,9 @@
     gmx_mm_pr      iq_S1  = gmx_setzero_pr();
     gmx_mm_pr      iq_S2  = gmx_setzero_pr();
     gmx_mm_pr      iq_S3  = gmx_setzero_pr();
-    gmx_mm_pr      mrc_3_S;
+    gmx_mm_pr      mrc_3_S, mzq_3_S, mzq_5_S;
 #ifdef CALC_ENERGIES
-    gmx_mm_pr      hrc_3_S, moh_rc_S;
+    gmx_mm_pr      hrc_3_S, moh_rc_S, hzq_3_S, hzq_5_S, moh_zq_S;
 #endif
 
 #ifdef CALC_COUL_TAB
@@ -313,6 +313,16 @@
     moh_rc_S = gmx_set1_pr(-ic->c_rf);
 #endif
 
+#ifdef CALC_COUL_ZQ
+    mzq_3_S = gmx_set1_pr(-2*ic->k_zq_2);
+    mzq_5_S = gmx_set1_pr(-4*ic->k_zq_4);
+#ifdef CALC_ENERGIES
+    hzq_3_S = gmx_set1_pr(ic->k_zq_2);
+    hzq_5_S = gmx_set1_pr(ic->k_zq_4);
+    moh_zq_S = gmx_set1_pr(-ic->c_zq);
+#endif
+#endif
+
 #ifdef CALC_ENERGIES
     tmpsum   = gmx_simd_align_real(tmpsum_array);
 #endif
@@ -425,6 +435,9 @@
 
 #ifdef CALC_COUL_RF
             Vc_sub_self = 0.5*ic->c_rf;
+#endif
+#ifdef CALC_COUL_ZQ
+            Vc_sub_self = 0.5*ic->c_zq;
 #endif
 #ifdef CALC_COUL_TAB
 #ifdef TAB_FDV0

@@ -97,6 +97,10 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
 #ifdef EL_RF
     float two_k_rf              = nbparam.two_k_rf;
 #endif
+#ifdef EL_ZQ
+    float two_k2_zq             = nbparam.two_k2_zq;
+    float four_k4_zq            = nbparam.four_k4_zq;
+#endif
 #ifdef EL_EWALD_TAB
     float coulomb_tab_scale     = nbparam.coulomb_tab_scale;
 #endif
@@ -110,7 +114,11 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
     float beta        = nbparam.ewald_beta;
     float ewald_shift = nbparam.sh_ewald;
 #else
+#ifdef EL_ZQ
+    float c_zq        = nbparam.c_zq;
+#else
     float c_rf        = nbparam.c_rf;
+#endif
 #endif
     float *e_lj       = atdat.e_lj;
     float *e_el       = atdat.e_el;
@@ -169,7 +177,7 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
     E_lj = 0.0f;
     E_el = 0.0f;
 
-#if defined EL_EWALD_TAB || defined EL_RF
+#if defined EL_EWALD_TAB || defined EL_RF || defined EL_ZQ
     if (nb_sci.shift == CENTRAL && pl_cj4[cij4_start].cj[0] == sci*NCL_PER_SUPERCL)
     {
         /* we have the diagonal: add the charge self interaction energy term */
@@ -183,7 +191,11 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
 #ifdef EL_RF
         E_el *= -nbparam.epsfac*0.5f*c_rf;
 #else
+#ifdef EL_ZQ
+        E_el *= -nbparam.epsfac*0.5f*c_zq;
+#else
         E_el *= -nbparam.epsfac*beta*M_FLOAT_1_SQRTPI; /* last factor 1/sqrt(pi) */
+#endif
 #endif
     }
 #endif
@@ -265,7 +277,7 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
                         int_bit = ((wexcl >> (jm * NCL_PER_SUPERCL + i)) & 1) ? 1.0f : 0.0f;
 
                         /* cutoff & exclusion check */
-#if defined EL_EWALD_TAB || defined EL_RF
+#if defined EL_EWALD_TAB || defined EL_RF || defined EL_ZQ
                         if (r2 < rcoulomb_sq *
                             (nb_sci.shift != CENTRAL || ci != cj || tidxj > tidxi))
 #else
@@ -286,7 +298,7 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
                             inv_r   = rsqrt(r2);
                             inv_r2  = inv_r * inv_r;
                             inv_r6  = inv_r2 * inv_r2 * inv_r2;
-#if defined EL_EWALD_TAB || defined EL_RF
+#if defined EL_EWALD_TAB || defined EL_RF || defined EL_ZQ
                             /* We could mask inv_r2, but with Ewald
                              * masking both inv_r6 and F_invr is faster */
                             inv_r6  *= int_bit;
@@ -317,6 +329,9 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
 #ifdef EL_RF
                             F_invr  += qi * qj_f * (int_bit*inv_r2 * inv_r - two_k_rf);
 #endif
+#ifdef EL_ZQ
+                            F_invr  += qi * qj_f * (int_bit*inv_r2 * inv_r - two_k2_zq - four_k4_zq * r2);
+#endif
 #ifdef EL_EWALD_TAB
                             F_invr  += qi * qj_f * (int_bit*inv_r2 - interpolate_coulomb_force_r(r2 * inv_r, coulomb_tab_scale)) * inv_r;
 #endif /* EL_EWALD_TAB */
@@ -327,6 +342,9 @@ __global__ void NB_KERNEL_FUNC_NAME(k_nbnxn, _legacy)
 #endif
 #ifdef EL_RF
                             E_el    += qi * qj_f * (int_bit*inv_r + 0.5f * two_k_rf * r2 - c_rf);
+#endif
+#ifdef EL_ZQ
+                            E_el    += qi * qj_f * (int_bit*inv_r + 0.5f * two_k2_zq * r2 + 0.25f * four_k4_zq - c_zq);
 #endif
 #ifdef EL_EWALD_TAB
                             /* 1.0f - erff is faster than erfcf */

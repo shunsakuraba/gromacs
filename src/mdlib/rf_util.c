@@ -271,6 +271,33 @@ void calc_rffac(FILE *fplog, int eel, real eps_r, real eps_rf, real Rc, real Tem
     }
 }
 
+void calc_zqfac(FILE *fplog, int eel, real alpha, real Rc,
+                real *k2zq, real *k4zq, real *czq)
+{
+    if(eel == eelZQ)
+    {
+        real arc, d1, d2;
+        if(alpha != 0.0) {
+            gmx_fatal(FARGS, "Current ZQ implementation does not support alpha /= 0.");
+        }
+        arc = alpha * Rc;
+ 
+        d1 = 1. * pow(Rc, -2.0) * (gmx_erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);
+        d2 = 2. * pow(Rc, -3.0) * (gmx_erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + pow(arc, 3.0)));
+
+        *k2zq =   3. / 4. * d1 * pow(Rc, -1.0) + 1. / 4. * d2;
+        *k4zq = - 1. / 8. * d1 * pow(Rc, -3.0) - 1. / 8. * d2 * pow(Rc, -2.0);
+        *czq = (gmx_erfc(arc) / Rc + *k2zq * pow(Rc, 2.0) + *k4zq * pow(Rc, 4.0));
+
+        if(fplog)
+        {
+            fprintf(fplog, "%s:\n"
+                    "alpha = %g, rc = %g, d1 = %g, d2 = %g, k2zq = %g, k4zq = %g, uzq(Rc) = %g\n",
+                    eel_names[eel], alpha, Rc, d1, d2, *k2zq, *k4zq, *czq);
+        }
+    }
+}
+
 void init_generalized_rf(FILE *fplog,
                          const gmx_mtop_t *mtop, const t_inputrec *ir,
                          t_forcerec *fr)

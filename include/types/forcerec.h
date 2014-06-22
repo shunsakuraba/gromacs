@@ -238,6 +238,9 @@ typedef struct {
     /* Constants for zero-dipole method */
     real zd_alpha, zd_b, zd_c;
 
+    /* Constants for zero-quadrupole method */
+    real k_zq_2, k_zq_4, c_zq;
+
     /* Charge sum and dipole for topology A/B ([0]/[1]) for Ewald corrections */
     double qsum[2];
     double q2sum[2];
