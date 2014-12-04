@@ -100,6 +100,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     const real *  x;
     real *        f;
     real          facel, krf, crf;
+    real          k2zq, k4zq, czq;
     const real *  chargeA;
     const real *  chargeB;
     real          sigma6_min, sigma6_def, lam_power, sc_power, sc_r_power;
@@ -144,6 +145,9 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     facel               = fr->epsfac;
     krf                 = fr->k_rf;
     crf                 = fr->c_rf;
+    k2zq                = fr->k_zq_2;
+    k4zq                = fr->k_zq_4;
+    czq                 = fr->c_zq;
     ewc                 = fr->ewaldcoeff;
     Vc                  = kernel_data->energygrp_elec;
     typeA               = mdatoms->typeA;
@@ -200,7 +204,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
         vdw_swV3 = vdw_swV4 = vdw_swV5 = vdw_swF2 = vdw_swF3 = vdw_swF4 = 0.0;
     }
 
-    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || EEL_ZD(fr->eeltype);
+    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || EEL_ZD(fr->eeltype) || fr->eeltype == eelZQ;
     bExactVdwCutoff     = (fr->vdw_modifier != eintmodNONE);
 
     /* For Ewald/PME interactions we cannot easily apply the soft-core component to
@@ -431,6 +435,12 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
                                 Vcoul[i]   = qq[i]*(rinvC + krf*rC*rC-crf);
                                 FscalC[i]  = qq[i]*(rinvC - 2.0*krf*rC*rC);
                                 break;
+
+                            case GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE:
+                                /* Zero-quadrupole summation */
+				Vcoul[i]   = qq[i]*(rinvC + (k2zq + k4zq*rC*rC)*rC*rC - czq);
+				FscalC[i]  = qq[i]*(rinvC - (2.0*k2zq + 4.0*k4zq*rC*rC)*rC*rC);
+				break;
 
                             case GMX_NBKERNEL_ELEC_CUBICSPLINETABLE:
                                 /* non-Ewald tabulated coulomb */
