@@ -359,9 +359,9 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
         }
         if (!(ir->coulombtype == eelCUT ||
               (EEL_RF(ir->coulombtype) && ir->coulombtype != eelRF_NEC) ||
-              EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD))
+              EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD || ir->coulombtype == eelZD))
         {
-            warning_error(wi, "With Verlet lists only cut-off, reaction-field, PME and Ewald electrostatics are supported");
+            warning_error(wi, "With Verlet lists only cut-off, reaction-field, zero-dipole, PME and Ewald electrostatics are supported");
         }
         if (!(ir->coulomb_modifier == eintmodNONE ||
               ir->coulomb_modifier == eintmodPOTSHIFT))
@@ -1097,6 +1097,24 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
         CHECK(ir->epsilon_r < 0);
     }
 
+    if (ir->coulombtype == eelZD)
+    {
+        if(ir->zd_alpha == 0) {
+           /* if zero-dipole method is employed with alpha == 0, the interacting potential and the force are exactly equal to the reaction field with rf = infinity.
+              Directly overwrite the method type with RF for fast implementation. */
+           sprintf(warn_buf, "Zero-dipole method with alpha = 0 is equivalent to the reaction field method with epsilon = infinity. It will be processed as the reaction-field hereafter.");
+           warning_note(wi, warn_buf);
+           ir->epsilon_rf = 0;
+           ir->coulombtype = eelRF_ZERO;
+       }
+        if(ir->zd_alpha != 0 && ir->zd_alpha <= 0.2) {
+           /* It is very likely to cause a mistake that zd's alpha is confused to be (AA^-1) instead of (nm^-1).  */
+           sprintf(warn_buf, "Zero-dipole dumping coefficient is too small. The value is typically around 1.0 (nm^-1). Perhaps you used (AA^-1)?");
+           warning(wi, warn_buf);
+       }
+    }
+
+
     if (EEL_RF(ir->coulombtype))
     {
         /* reaction field (at the cut-off) */
@@ -1351,8 +1369,8 @@ nd %s",
         }
         if (!ir_coulomb_might_be_zero_at_cutoff(ir) && ir->rcoulomb > 0)
         {
-            sprintf(warn_buf, "You are using a cut-off for electrostatics with NVE, for good energy conservation use coulombtype = %s or %s",
-                    eel_names[eelPMESWITCH], eel_names[eelRF_ZERO]);
+            sprintf(warn_buf, "You are using a cut-off for electrostatics with NVE, for good energy conservation use coulombtype = %s, %s or %s",
+                    eel_names[eelPMESWITCH], eel_names[eelRF_ZERO], eel_names[eelZD]);
             warning_note(wi, warn_buf);
         }
     }
@@ -1954,6 +1972,8 @@ void get_ir(const char *mdparin, const char *mdparout,
     CTYPE ("Relative dielectric constant for the medium and the reaction field");
     RTYPE ("epsilon-r",   ir->epsilon_r,  1.0);
     RTYPE ("epsilon-rf",  ir->epsilon_rf, 0.0);
+    CTYPE ("Parameter for the zero-dipole summation electrostatic");
+    RTYPE ("zd-alpha",    ir->zd_alpha, 0.0);
     CTYPE ("Method for doing Van der Waals");
     EETYPE("vdw-type",    ir->vdwtype,    evdw_names);
     EETYPE("vdw-modifier",    ir->vdw_modifier,    eintmod_names);

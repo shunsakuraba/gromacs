@@ -587,6 +587,11 @@ void please_cite(FILE *fp, const char *key)
           "GROMACS: High performance molecular simulations through multi-level parallelism from laptops to supercomputers",
           "SoftwareX",
           1, 2015, "19-25" },
+        { "Fukuda2011",
+          "Fukuda Ikuo, Yonezawa Yasushige, Nakamura Haruki",
+          "Molecular dynamics scheme for precise estimation of electrostatic interaction via zero-dipole summation principle",
+          "Journal of Chemical Physics",
+         134, 2011, "164107" }
     };
 #define NSTR (int)asize(citedb)
 

@@ -78,6 +78,7 @@ enum {
     etabCOULEncad,
     etabEXPMIN,
     etabUSER,
+    etabZD,
     etabNR
 };
 
@@ -113,6 +114,7 @@ static const t_tab_props tprops[etabNR] = {
     { "LJ12-Encad shift", FALSE },
     { "COUL-Encad shift",  TRUE },
     { "EXPMIN", FALSE },
+    { "Zero-Dipole", TRUE },
     { "USER", FALSE },
 };
 
@@ -132,8 +134,9 @@ typedef struct {
 #define pow4(x) ((x)*(x)*(x)*(x))
 #define pow5(x) ((x)*(x)*(x)*(x)*(x))
 
-double v_q_ewald_lr(double beta, double r)
+double v_q_ewald_lr(double beta, double r, double rc)
 {
+    (void) rc;
     if (r == 0)
     {
         return beta*2/sqrt(M_PI);
@@ -144,9 +147,10 @@ double v_q_ewald_lr(double beta, double r)
     }
 }
 
-double v_lj_ewald_lr(double beta, double r)
+double v_lj_ewald_lr(double beta, double r, double rc)
 {
     double br, br2, br4, r6, factor;
+    (void) rc;
     if (r == 0)
     {
         return pow(beta, 6)/6;
@@ -162,12 +166,34 @@ double v_lj_ewald_lr(double beta, double r)
     }
 }
 
+double v_q_zd_lr(double beta, double r, double rc)
+{
+    double erfc_rc = gmx_erfcd(beta*rc);
+    double exp_rc = exp(- pow2(beta) * pow2(rc));
+    double b = 0.5 * erfc_rc / pow3(rc) + beta / sqrt(M_PI) * exp_rc / pow2(rc);
+    double c = 1.5 * erfc_rc / rc       + beta / sqrt(M_PI) * exp_rc;
+    if (r == 0)
+    {
+        return c + beta*2/sqrt(M_PI);
+    }
+    else if (r >= rc)
+    {
+         return 1.0 / r;
+    }
+    else
+    {
+      /* Note: this corresponds to the negative NB energy. See nbnxn implementation for details. */
+      return gmx_erfd(beta*r) / r - b * r * r + c;
+    }
+}
+
 void table_spline3_fill_ewald_lr(real                                 *table_f,
                                  real                                 *table_v,
                                  real                                 *table_fdv0,
                                  int                                   ntab,
                                  double                                dx,
                                  real                                  beta,
+                                 real                                  rc,
                                  real_space_grid_contribution_computer v_lr)
 {
     real     tab_max;
@@ -206,7 +232,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_f,
     {
         x_r0 = i*dx;
 
-        v_r0 = (*v_lr)(beta, x_r0);
+        v_r0 = (*v_lr)(beta, x_r0, rc);
 
         if (!bOutOfRange)
         {
@@ -232,7 +258,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_f,
         }
 
         /* Get the potential at table point i-1 */
-        v_r1 = (*v_lr)(beta, (i-1)*dx);
+        v_r1 = (*v_lr)(beta, (i-1)*dx, rc);
 
         if (v_r1 != v_r1 || v_r1 < -tab_max || v_r1 > tab_max)
         {
@@ -244,7 +270,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_f,
             /* Calculate the average second derivative times dx over interval i-1 to i.
              * Using the function values at the end points and in the middle.
              */
-            a2dx = (v_r0 + v_r1 - 2*(*v_lr)(beta, x_r0-0.5*dx))/(0.25*dx);
+            a2dx = (v_r0 + v_r1 - 2*(*v_lr)(beta, x_r0-0.5*dx, rc))/(0.25*dx);
             /* Set the derivative of the spline to match the difference in potential
              * over the interval plus the average effect of the quadratic term.
              * This is the essential step for minimizing the error in the force.
@@ -953,6 +979,7 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
                 break;
             case etabRF:
             case etabRF_ZERO:
+            case etabZD:
                 /* No need for preventing the usage of modifiers with RF */
                 Vcut  = 0.0;
                 break;
@@ -1110,6 +1137,21 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
                     Ftab = 0;
                 }
                 break;
+            case etabZD:
+                if(r < rc) {
+                    Vtab  = gmx_erfc(fr->zd_alpha * r) / r - gmx_erfc(fr->zd_alpha * rc) / rc + fr->zd_b * (r * r - rc * rc);
+                    Ftab = gmx_erfc(fr->zd_alpha * r) / r2 + fr->zd_alpha * M_2_SQRTPI * exp(- fr->zd_alpha*fr->zd_alpha * r2) / r - 2 * fr->zd_b * r;
+                }
+                else
+                {
+                    Vtab = 0;
+                    Ftab = 0;
+                }
+                if (debug)
+                {
+                    fprintf(debug, "etabZD at %g: V=%g, F=%g\n", r, Vtab, Ftab);
+                }
+                break;
             case etabEXPMIN:
                 expr  = exp(-r);
                 Vtab  = expr;
@@ -1199,6 +1241,10 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
     {
         td->v[i] = td->v[i+1] + td->f[i+1]*(td->x[i+1] - td->x[i]);
         td->f[i] = td->f[i+1];
+        if (debug && tp == etabZD)
+        {
+            fprintf(debug, "etabZD extra %d: V=%g, F=%g\n", i, td->v[i], td->f[i]);
+        }
     }
 
 #ifdef DEBUG_SWITCH
@@ -1276,14 +1322,17 @@ static void set_table_type(int tabsel[], const t_forcerec *fr, gmx_bool b14only)
         case eelRF_ZERO:
             tabsel[etiCOUL] = etabRF_ZERO;
             break;
+        case eelZD:
+            tabsel[etiCOUL] = etabZD;
+            break;
         case eelSWITCH:
             tabsel[etiCOUL] = etabCOULSwitch;
             break;
-        case eelUSER:
-            tabsel[etiCOUL] = etabUSER;
-            break;
         case eelENCADSHIFT:
             tabsel[etiCOUL] = etabCOULEncad;
+            break;
+        case eelUSER:
+            tabsel[etiCOUL] = etabUSER;
             break;
         default:
             gmx_fatal(FARGS, "Invalid eeltype %d", eltype);

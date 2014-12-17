@@ -82,6 +82,9 @@ void init_generalized_rf(FILE *fplog,
                          t_forcerec *fr);
 /* Initialize the generalized reaction field parameters */
 
+/* In zd_util.c */
+void calc_zdfac(FILE *fplog, int eel, real zd_alpha, real Rc,
+                real *b, real *c);
 
 /* In wall.c */
 void make_wall_tables(FILE *fplog, const output_env_t oenv,

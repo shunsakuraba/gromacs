@@ -1901,7 +1901,7 @@ static void init_ewald_f_table(interaction_const_t *ic,
         snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
         snew_aligned(ic->tabq_coul_V, ic->tabq_size, 32);
         table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
-                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_q, v_q_ewald_lr);
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_q, 0.0, v_q_ewald_lr);
     }
 
     if (EVDW_PME(ic->vdwtype))
@@ -1910,8 +1910,34 @@ static void init_ewald_f_table(interaction_const_t *ic,
         snew_aligned(ic->tabq_vdw_F, ic->tabq_size, 32);
         snew_aligned(ic->tabq_vdw_V, ic->tabq_size, 32);
         table_spline3_fill_ewald_lr(ic->tabq_vdw_F, ic->tabq_vdw_V, ic->tabq_vdw_FDV0,
-                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_lj, v_lj_ewald_lr);
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_lj, 0.0, v_lj_ewald_lr);
     }
+}
+
+static void init_zd_f_table(interaction_const_t *ic,
+                            real                 rtab)
+{
+    real maxr;
+
+    /* FIXME: TODO */
+#ifdef GMX_DOUBLE
+    ic->tabq_scale = 2000.0;
+#else
+    ic->tabq_scale = 500.0;
+#endif
+    maxr           = (rtab > ic->rcoulomb) ? rtab : ic->rcoulomb;
+    ic->tabq_size  = (int)(maxr*ic->tabq_scale) + 2;
+
+    sfree_aligned(ic->tabq_coul_FDV0);
+    sfree_aligned(ic->tabq_coul_F);
+    sfree_aligned(ic->tabq_coul_V);
+
+    /* Create the original table data in FDV0 */
+    snew_aligned(ic->tabq_coul_FDV0, ic->tabq_size*4, 32);
+    snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
+    snew_aligned(ic->tabq_coul_V, ic->tabq_size, 32);
+    table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
+                                ic->tabq_size, 1/ic->tabq_scale, ic->zd_alpha, ic->rcoulomb, v_q_zd_lr);
 }
 
 void init_interaction_const_tables(FILE                *fp,
@@ -1930,6 +1956,15 @@ void init_interaction_const_tables(FILE                *fp,
             fprintf(fp, "Initialized non-bonded Ewald correction tables, spacing: %.2e size: %d\n\n",
                     1/ic->tabq_scale, ic->tabq_size);
         }
+    }
+    else if (ic->eeltype == eelZD)
+    {
+      init_zd_f_table(ic, rtab);
+      if (fp != NULL)
+       { 
+         fprintf(fp, "Initizlied zero-dipole force tables, spacing: %.2e size: %d\n\n",
+                 1/ic->tabq_scale, ic->tabq_size);
+       }
     }
 }
 
@@ -2048,7 +2083,7 @@ init_interaction_const(FILE                       *fp,
     ic->epsfac           = fr->epsfac;
     ic->ewaldcoeff_q     = fr->ewaldcoeff_q;
 
-    if (fr->coulomb_modifier == eintmodPOTSHIFT)
+    if (fr->coulomb_modifier == eintmodPOTSHIFT && ic->eeltype != eelZD)
     {
         ic->sh_ewald = gmx_erfc(ic->ewaldcoeff_q*ic->rcoulomb);
     }
@@ -2063,6 +2098,12 @@ init_interaction_const(FILE                       *fp,
         ic->epsilon_rf = fr->epsilon_rf;
         ic->k_rf       = fr->k_rf;
         ic->c_rf       = fr->c_rf;
+    }
+    else if (ic->eeltype == eelZD)
+    {
+        ic->zd_alpha   = fr->zd_alpha;
+        ic->zd_b       = fr->zd_b;
+        ic->zd_c       = fr->zd_c;
     }
     else
     {
@@ -2755,7 +2796,7 @@ void init_forcerec(FILE              *fp,
             gmx_fatal(FARGS, "Cut-off scheme %S only supports LJ repulsion power 12", ecutscheme_names[ir->cutoff_scheme]);
         }
         fr->bvdwtab  = FALSE;
-        fr->bcoultab = FALSE;
+        fr->bcoultab = fr->eeltype == eelZD;
     }
 
     /* Tables are used for direct ewald sum */
@@ -2813,6 +2854,7 @@ void init_forcerec(FILE              *fp,
     /* Electrostatics */
     fr->epsilon_r       = ir->epsilon_r;
     fr->epsilon_rf      = ir->epsilon_rf;
+    fr->zd_alpha        = ir->zd_alpha;
     fr->fudgeQQ         = mtop->ffparams.fudgeQQ;
 
     /* Parameters for generalized RF */
@@ -2982,6 +3024,12 @@ void init_forcerec(FILE              *fp,
         calc_rffac(fp, fr->eeltype, fr->epsilon_r, fr->epsilon_rf,
                    fr->rcoulomb, fr->temp, fr->zsquare, box,
                    &fr->kappa, &fr->k_rf, &fr->c_rf);
+    }
+    /* Zero-dipole summation constants */
+    if (fr->eeltype == eelZD)
+    {
+      calc_zdfac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
+                &fr->zd_b, &fr->zd_c);
     }
 
     /*This now calculates sum for q and c6*/

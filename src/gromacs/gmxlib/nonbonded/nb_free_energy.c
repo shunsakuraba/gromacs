@@ -250,7 +250,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     }
     else
     {
-        bExactElecCutoff = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO;
+        bExactElecCutoff = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || fr->eeltype == eelZD;
         bExactVdwCutoff  = (fr->vdw_modifier != eintmodNONE);
     }
 
