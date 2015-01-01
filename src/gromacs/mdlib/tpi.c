@@ -289,7 +289,7 @@ double do_tpi(FILE *fplog, t_commrec *cr,
         bCharge |= (mdatoms->chargeA[i] != 0 ||
                     (mdatoms->chargeB && mdatoms->chargeB[i] != 0));
     }
-    bRFExcl = (bCharge && EEL_RF(fr->eeltype) && fr->eeltype != eelRF_NEC);
+    bRFExcl = (bCharge && ((EEL_RF(fr->eeltype) && fr->eeltype != eelRF_NEC) || fr->eeltype == eelZQ));
 
     calc_cgcm(fplog, cg_tp, cg_tp+1, &(top->cgs), state->x, fr->cg_cm);
     if (bCavity)

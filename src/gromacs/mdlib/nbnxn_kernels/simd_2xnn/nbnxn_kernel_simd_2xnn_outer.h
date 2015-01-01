@@ -124,6 +124,13 @@
 #endif
 #endif
 
+#ifdef CALC_COUL_ZQ
+    gmx_simd_real_t      mzq_3_S, mzq_5_S;
+#ifdef CALC_ENERGIES
+    gmx_simd_real_t      hzq_3_S, hzq_5_S, moh_zq_S;
+#endif
+#endif
+
 #ifdef CALC_COUL_TAB
     /* Coulomb table variables */
     gmx_simd_real_t   invtsp_S;
@@ -262,6 +269,15 @@
 #ifdef CALC_ENERGIES
     hrc_3_S  = gmx_simd_set1_r(ic->k_rf);
     moh_rc_S = gmx_simd_set1_r(-ic->c_rf);
+#endif
+#endif
+#ifdef CALC_COUL_ZQ
+    mzq_3_S = gmx_simd_set1_r(-2*ic->k_zq_2);
+    mzq_5_S = gmx_simd_set1_r(-4*ic->k_zq_4);
+#ifdef CALC_ENERGIES
+    hzq_3_S = gmx_simd_set1_r(ic->k_zq_2);
+    hzq_5_S = gmx_simd_set1_r(ic->k_zq_4);
+    moh_zq_S = gmx_simd_set1_r(-ic->c_zq);
 #endif
 #endif
 
@@ -467,6 +483,9 @@
 
 #ifdef CALC_COUL_RF
                 Vc_sub_self = 0.5*ic->c_rf;
+#endif
+#ifdef CALC_COUL_ZQ
+                Vc_sub_self = 0.5*ic->c_zq;
 #endif
 #ifdef CALC_COUL_TAB
 #ifdef TAB_FDV0

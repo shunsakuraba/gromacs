@@ -301,6 +301,15 @@
 #endif
 #endif
 
+#ifdef CALC_COUL_ZQ
+            fcoul  = qq*(interact*rinv*rinvsq - k2_zq2 - k4_zq4*rsq);
+            /* 6 flops for ZQ force */
+#ifdef CALC_ENERGIES
+            vcoul  = qq*(interact*rinv + (k4_zq*rsq + k2_zq)*rsq - c_zq);
+            /* 7 flops for ZQ energy */
+#endif
+#endif
+
 #ifdef CALC_COUL_TAB
             rs     = rsq*rinv*ic->tabq_scale;
             ri     = (int)rs;

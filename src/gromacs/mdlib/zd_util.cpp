@@ -43,7 +43,7 @@
 #include "gromacs/legacyheaders/typedefs.h"
 #include "gromacs/legacyheaders/copyrite.h"
 #include "gromacs/legacyheaders/names.h"
-#include "gromacs/math/units.h"
+#include "gromacs/math/utilities.h"
 
 void calc_zdfac(FILE *fplog, int eel, real zd_alpha, real Rc,
                 real *b, real *c)

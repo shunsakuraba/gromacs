@@ -64,7 +64,7 @@
 /*! \brief Kinds of electrostatic treatments in SIMD Verlet kernels
  */
 enum {
-    coulktRF, coulktTAB, coulktTAB_TWIN, coulktEWALD, coulktEWALD_TWIN, coulktNR
+    coulktRF, coulktZQ, coulktTAB, coulktTAB_TWIN, coulktEWALD, coulktEWALD_TWIN, coulktNR
 };
 
 /*! \brief Kinds of Van der Waals treatments in SIMD Verlet kernels
@@ -86,6 +86,14 @@ static p_nbk_func_noener p_nbk_noener[coulktNR][vdwktNR] =
         nbnxn_kernel_ElecRF_VdwLJFSw_F_2xnn,
         nbnxn_kernel_ElecRF_VdwLJPSw_F_2xnn,
         nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_2xnn,
+    },
+    {
+        nbnxn_kernel_ElecZQ_VdwLJCombGeom_F_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJCombLB_F_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJ_F_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJFSw_F_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJPSw_F_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJEwCombGeom_F_2xnn,
     },
     {
         nbnxn_kernel_ElecQSTab_VdwLJCombGeom_F_2xnn,
@@ -132,6 +140,14 @@ static p_nbk_func_ener p_nbk_ener[coulktNR][vdwktNR] =
         nbnxn_kernel_ElecRF_VdwLJEwCombGeom_VF_2xnn,
     },
     {
+        nbnxn_kernel_ElecZQ_VdwLJCombGeom_VF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJCombLB_VF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJ_VF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJFSw_VF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJPSw_VF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJEwCombGeom_VF_2xnn,
+    },
+    {
         nbnxn_kernel_ElecQSTab_VdwLJCombGeom_VF_2xnn,
         nbnxn_kernel_ElecQSTab_VdwLJCombLB_VF_2xnn,
         nbnxn_kernel_ElecQSTab_VdwLJ_VF_2xnn,
@@ -174,6 +190,14 @@ static p_nbk_func_ener p_nbk_energrp[coulktNR][vdwktNR] =
         nbnxn_kernel_ElecRF_VdwLJFSw_VgrpF_2xnn,
         nbnxn_kernel_ElecRF_VdwLJPSw_VgrpF_2xnn,
         nbnxn_kernel_ElecRF_VdwLJEwCombGeom_VgrpF_2xnn,
+    },
+    {
+        nbnxn_kernel_ElecZQ_VdwLJCombGeom_VgrpF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJCombLB_VgrpF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJ_VgrpF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJFSw_VgrpF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJPSw_VgrpF_2xnn,
+        nbnxn_kernel_ElecZQ_VdwLJEwCombGeom_VgrpF_2xnn,
     },
     {
         nbnxn_kernel_ElecQSTab_VdwLJCombGeom_VgrpF_2xnn,
@@ -281,6 +305,10 @@ nbnxn_kernel_simd_2xnn(nbnxn_pairlist_set_t      gmx_unused *nbl_list,
     if (EEL_RF(ic->eeltype) || ic->eeltype == eelCUT)
     {
         coulkt = coulktRF;
+    }
+    else if (ic->eeltype == eelZQ)
+    {
+        coulkt = coulktZQ;
     }
     else
     {

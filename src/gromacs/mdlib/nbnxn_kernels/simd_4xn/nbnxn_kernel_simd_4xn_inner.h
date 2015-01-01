@@ -538,6 +538,22 @@
 #endif
 #endif
 
+#ifdef CALC_COUL_ZQ
+    /* Electrostatic interactions */
+    frcoul_S0   = gmx_simd_mul_r(qq_S0, gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, mzq_5_S, mzq_3_S), rinv_ex_S0));
+    frcoul_S1   = gmx_simd_mul_r(qq_S1, gmx_simd_fmadd_r(rsq_S1, gmx_simd_fmadd_r(rsq_S1, mzq_5_S, mzq_3_S), rinv_ex_S1));
+    frcoul_S2   = gmx_simd_mul_r(qq_S2, gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, mzq_5_S, mzq_3_S), rinv_ex_S2));
+    frcoul_S3   = gmx_simd_mul_r(qq_S3, gmx_simd_fmadd_r(rsq_S3, gmx_simd_fmadd_r(rsq_S3, mzq_5_S, mzq_3_S), rinv_ex_S3));
+
+#ifdef CALC_ENERGIES
+    vcoul_S0    = gmx_simd_mul_r(qq_S0, gmx_simd_add_r(rinv_ex_S0, gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S1    = gmx_simd_mul_r(qq_S1, gmx_simd_add_r(rinv_ex_S1, gmx_simd_fmadd_r(rsq_S1, gmx_simd_fmadd_r(rsq_S1, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_add_r(rinv_ex_S2, gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S3    = gmx_simd_mul_r(qq_S3, gmx_simd_add_r(rinv_ex_S3, gmx_simd_fmadd_r(rsq_S3, gmx_simd_fmadd_r(rsq_S3, hzq_5_S, hzq_3_S), moh_zq_S)));
+#endif
+#endif
+
+
 #ifdef CALC_COUL_EWALD
     /* We need to mask (or limit) rsq for the cut-off,
      * as large distances can cause an overflow in gmx_pmecorrF/V.

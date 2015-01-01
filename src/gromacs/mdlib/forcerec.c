@@ -2105,6 +2105,13 @@ init_interaction_const(FILE                       *fp,
         ic->zd_b       = fr->zd_b;
         ic->zd_c       = fr->zd_c;
     }
+    else if (ic->eeltype == eelZQ)
+    {
+        ic->zd_alpha   = fr->zd_alpha;
+        ic->k_zq_2     = fr->k_zq_2;
+        ic->k_zq_4     = fr->k_zq_4;
+        ic->c_zq       = fr->c_zq;
+    }
     else
     {
         /* For plain cut-off we might use the reaction-field kernels */
@@ -2649,6 +2656,10 @@ void init_forcerec(FILE              *fp,
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_REACTIONFIELD;
             break;
 
+        case eelZQ:
+            fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE;
+            break;
+
         case eelRF_ZERO:
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_REACTIONFIELD;
             fr->coulomb_modifier          = eintmodEXACTCUTOFF;
@@ -3030,6 +3041,12 @@ void init_forcerec(FILE              *fp,
     {
       calc_zdfac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
                 &fr->zd_b, &fr->zd_c);
+    }
+
+    if (fr->eeltype == eelZQ)
+    {
+        calc_zqfac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
+                   &fr->k_zq_2, &fr->k_zq_4, &fr->c_zq);
     }
 
     /*This now calculates sum for q and c6*/

@@ -73,7 +73,7 @@
  * TPX_TAG_RELEASE, and instead add an element to tpxv and set
  * tpx_version to that.
  */
-static const char *tpx_tag = "zerodipole";
+static const char *tpx_tag = "zeroquadrupole";
 
 /*! \brief Enum of values that describe the contents of a tpr file
  * whose format matches a version number

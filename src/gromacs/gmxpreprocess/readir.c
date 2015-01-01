@@ -359,7 +359,8 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
         }
         if (!(ir->coulombtype == eelCUT ||
               (EEL_RF(ir->coulombtype) && ir->coulombtype != eelRF_NEC) ||
-              EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD || ir->coulombtype == eelZD))
+              EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD ||
+              ir->coulombtype == eelZD || ir->coulombtype == eelZQ))
         {
             warning_error(wi, "With Verlet lists only cut-off, reaction-field, zero-dipole, PME and Ewald electrostatics are supported");
         }
@@ -1136,7 +1137,20 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
                     eel_names[ir->coulombtype]);
             warning(wi, warn_buf);
         }
+
     }
+    if (ir->coulombtype == eelZQ)
+    {
+        if (ir->zd_alpha != 0.0)
+        {
+            warning_error(wi, "Current Zero-quadrupole implementation only supports zd_alpha = 0");
+        }
+        if (ir->cutoff_scheme != ecutsVERLET)
+        {
+            warning_error(wi, "Current Zero-quadrupole implementation only supports Verlet cutoff scheme");
+        }
+    }
+
     /* Allow rlist>rcoulomb for tabulated long range stuff. This just
      * means the interaction is zero outside rcoulomb, but it helps to
      * provide accurate energy conservation.

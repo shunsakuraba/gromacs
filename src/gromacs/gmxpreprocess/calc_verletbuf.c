@@ -934,7 +934,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     d2_el  = 0;
     if (ir->coulombtype == eelCUT || EEL_RF(ir->coulombtype) || ir->coulombtype == eelZD)
     {
-        real eps_rf, k_rf;
+        real eps_rf, k_rf, k_2_zq, k_4_zq;
 
         if (ir->coulombtype == eelCUT)
         {
@@ -966,6 +966,13 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
             md1_el = elfac*(pow(ir->rcoulomb, -2.0) - 2*k_rf*ir->rcoulomb);
         }
         d2_el      = elfac*(2*pow(ir->rcoulomb, -3.0) + 2*k_rf);
+    }
+    else if (ir->coulombtype == eelZQ)
+    {
+        md1_el = 0.0;
+        /* The first and second derivative of energy function at Rc are both 0 in ZQ. This drives energy drift prediction wrong.
+           Here we add a small d2_el value to let it evaluate conservatively */
+        d2_el = 0.25 * elfac* pow(ir->rcoulomb, -3.0);
     }
     else if (EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD)
     {

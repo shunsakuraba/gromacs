@@ -90,6 +90,28 @@ typedef void (*p_nbk_func_ener)(const nbnxn_pairlist_t     *nbl,
 #undef LJ_EWALD
 #undef CALC_COUL_RF
 
+/* Analytical zero-quadrupole summation kernels */
+#define CALC_COUL_ZQ
+#define LJ_CUT
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_CUT
+#define LJ_FORCE_SWITCH
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_FORCE_SWITCH
+#define LJ_POT_SWITCH
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_POT_SWITCH
+#define LJ_EWALD
+#define LJ_CUT
+#define LJ_EWALD_COMB_GEOM
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_EWALD_COMB_GEOM
+#define LJ_EWALD_COMB_LB
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_EWALD_COMB_LB
+#undef LJ_CUT
+#undef LJ_EWALD
+#undef CALC_COUL_ZQ
 
 /* Tabulated exclusion interaction electrostatics kernels */
 #define CALC_COUL_TAB
@@ -136,9 +158,8 @@ typedef void (*p_nbk_func_ener)(const nbnxn_pairlist_t     *nbl,
 #undef VDW_CUTOFF_CHECK
 #undef CALC_COUL_TAB
 
-
 enum {
-    coultRF, coultTAB, coultTAB_TWIN, coultNR
+    coultRF, coultZQ, coultTAB, coultTAB_TWIN, coultNR
 };
 
 enum {
@@ -148,6 +169,7 @@ enum {
 p_nbk_func_noener p_nbk_c_noener[coultNR][vdwtNR] =
 {
     { nbnxn_kernel_ElecRF_VdwLJ_F_ref,           nbnxn_kernel_ElecRF_VdwLJFsw_F_ref,           nbnxn_kernel_ElecRF_VdwLJPsw_F_ref,           nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_ref,           nbnxn_kernel_ElecRF_VdwLJEwCombLB_F_ref           },
+    { nbnxn_kernel_ElecZQ_VdwLJ_F_ref,           nbnxn_kernel_ElecZQ_VdwLJFsw_F_ref,           nbnxn_kernel_ElecZQ_VdwLJPsw_F_ref,           nbnxn_kernel_ElecZQ_VdwLJEwCombGeom_F_ref,           nbnxn_kernel_ElecZQ_VdwLJEwCombLB_F_ref           },
     { nbnxn_kernel_ElecQSTab_VdwLJ_F_ref,        nbnxn_kernel_ElecQSTab_VdwLJFsw_F_ref,        nbnxn_kernel_ElecQSTab_VdwLJPsw_F_ref,        nbnxn_kernel_ElecQSTab_VdwLJEwCombGeom_F_ref,        nbnxn_kernel_ElecQSTab_VdwLJEwCombLB_F_ref        },
     { nbnxn_kernel_ElecQSTabTwinCut_VdwLJ_F_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJFsw_F_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJPsw_F_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJEwCombGeom_F_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJEwCombLB_F_ref }
 };
@@ -155,6 +177,7 @@ p_nbk_func_noener p_nbk_c_noener[coultNR][vdwtNR] =
 p_nbk_func_ener p_nbk_c_ener[coultNR][vdwtNR] =
 {
     { nbnxn_kernel_ElecRF_VdwLJ_VF_ref,           nbnxn_kernel_ElecRF_VdwLJFsw_VF_ref,           nbnxn_kernel_ElecRF_VdwLJPsw_VF_ref,           nbnxn_kernel_ElecRF_VdwLJEwCombGeom_VF_ref,           nbnxn_kernel_ElecRF_VdwLJEwCombLB_VF_ref            },
+    { nbnxn_kernel_ElecZQ_VdwLJ_VF_ref,           nbnxn_kernel_ElecZQ_VdwLJFsw_VF_ref,           nbnxn_kernel_ElecZQ_VdwLJPsw_VF_ref,           nbnxn_kernel_ElecZQ_VdwLJEwCombGeom_VF_ref,           nbnxn_kernel_ElecZQ_VdwLJEwCombLB_VF_ref            },
     { nbnxn_kernel_ElecQSTab_VdwLJ_VF_ref,        nbnxn_kernel_ElecQSTab_VdwLJFsw_VF_ref,        nbnxn_kernel_ElecQSTab_VdwLJPsw_VF_ref,        nbnxn_kernel_ElecQSTab_VdwLJEwCombGeom_VF_ref,        nbnxn_kernel_ElecQSTab_VdwLJEwCombLB_VF_ref         },
     { nbnxn_kernel_ElecQSTabTwinCut_VdwLJ_VF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJFsw_VF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJPsw_VF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJEwCombGeom_VF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJEwCombLB_VF_ref  }
 };
@@ -162,6 +185,7 @@ p_nbk_func_ener p_nbk_c_ener[coultNR][vdwtNR] =
 p_nbk_func_ener p_nbk_c_energrp[coultNR][vdwtNR] =
 {
     { nbnxn_kernel_ElecRF_VdwLJ_VgrpF_ref,           nbnxn_kernel_ElecRF_VdwLJFsw_VgrpF_ref,           nbnxn_kernel_ElecRF_VdwLJPsw_VgrpF_ref,           nbnxn_kernel_ElecRF_VdwLJEwCombGeom_VgrpF_ref,           nbnxn_kernel_ElecRF_VdwLJEwCombLB_VgrpF_ref           },
+    { nbnxn_kernel_ElecZQ_VdwLJ_VgrpF_ref,           nbnxn_kernel_ElecZQ_VdwLJFsw_VgrpF_ref,           nbnxn_kernel_ElecZQ_VdwLJPsw_VgrpF_ref,           nbnxn_kernel_ElecZQ_VdwLJEwCombGeom_VgrpF_ref,           nbnxn_kernel_ElecZQ_VdwLJEwCombLB_VgrpF_ref           },
     { nbnxn_kernel_ElecQSTab_VdwLJ_VgrpF_ref,        nbnxn_kernel_ElecQSTab_VdwLJFsw_VgrpF_ref,        nbnxn_kernel_ElecQSTab_VdwLJPsw_VgrpF_ref,        nbnxn_kernel_ElecQSTab_VdwLJEwCombGeom_VgrpF_ref,        nbnxn_kernel_ElecQSTab_VdwLJEwCombLB_VgrpF_ref        },
     { nbnxn_kernel_ElecQSTabTwinCut_VdwLJ_VgrpF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJFsw_VgrpF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJPsw_VgrpF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJEwCombGeom_VgrpF_ref, nbnxn_kernel_ElecQSTabTwinCut_VdwLJEwCombLB_VgrpF_ref }
 };
@@ -190,6 +214,10 @@ nbnxn_kernel_ref(const nbnxn_pairlist_set_t *nbl_list,
     if (EEL_RF(ic->eeltype) || ic->eeltype == eelCUT)
     {
         coult = coultRF;
+    }
+    else if(ic->eeltype == eelZQ)
+    {
+        coult = coultZQ;
     }
     else
     {

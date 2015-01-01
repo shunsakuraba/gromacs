@@ -55,6 +55,9 @@
 #ifdef CALC_COUL_RF
 #define NBK_FUNC_NAME2(ljt, feg) nbnxn_kernel ## _ElecRF ## ljt ## feg ## _ref
 #endif
+#ifdef CALC_COUL_ZQ
+#define NBK_FUNC_NAME2(ljt, feg) nbnxn_kernel ## _ElecZQ ## ljt ## feg ## _ref
+#endif
 #ifdef CALC_COUL_TAB
 #ifndef VDW_CUTOFF_CHECK
 #define NBK_FUNC_NAME2(ljt, feg) nbnxn_kernel ## _ElecQSTab ## ljt ## feg ## _ref
@@ -155,6 +158,12 @@ NBK_FUNC_NAME(_VgrpF)
     real       k_rf, c_rf;
 #endif
 #endif
+#ifdef CALC_COUL_ZQ
+    real       k2_zq2, k4_zq4;
+#ifdef CALC_ENERGIES
+    real       k2_zq, k4_zq, c_zq;
+#endif
+#endif
 #ifdef CALC_COUL_TAB
     real       tabscale;
 #ifdef CALC_ENERGIES
@@ -198,6 +207,16 @@ NBK_FUNC_NAME(_VgrpF)
     c_rf = ic->c_rf;
 #endif
 #endif
+#ifdef CALC_COUL_ZQ
+    k2_zq2 = 2*ic->k_zq_2;
+    k4_zq4 = 4*ic->k_zq_4;
+#ifdef CALC_ENERGIES
+    k2_zq = ic->k_zq_2;
+    k4_zq = ic->k_zq_4;
+    c_zq = ic->c_zq;
+#endif
+#endif
+
 #ifdef CALC_COUL_TAB
     tabscale = ic->tabq_scale;
 #ifdef CALC_ENERGIES
@@ -294,6 +313,10 @@ NBK_FUNC_NAME(_VgrpF)
 #ifdef CALC_COUL_RF
             Vc_sub_self = 0.5*c_rf;
 #endif
+#ifdef CALC_COUL_ZQ
+            Vc_sub_self = 0.5*c_zq;
+#endif
+
 #ifdef CALC_COUL_TAB
 #ifdef GMX_DOUBLE
             Vc_sub_self = 0.5*tab_coul_V[0];

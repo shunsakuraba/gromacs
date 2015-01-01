@@ -400,7 +400,7 @@ void do_force_lowlevel(FILE       *fplog,   gmx_int64_t step,
     /* Check whether we need to do bondeds or correct for exclusions */
     if (fr->bMolPBC &&
         ((flags & GMX_FORCE_BONDED)
-         || EEL_RF(fr->eeltype) || EEL_FULL(fr->eeltype) || EVDW_PME(fr->vdwtype)))
+         || EEL_RF(fr->eeltype) || fr->eeltype == eelZQ || EEL_FULL(fr->eeltype) || EVDW_PME(fr->vdwtype)))
     {
         /* Since all atoms are in the rectangular or triclinic unit-cell,
          * only single box vector shifts (2 in x) are required.
@@ -687,7 +687,8 @@ void do_force_lowlevel(FILE       *fplog,   gmx_int64_t step,
     else
     {
         /* Is there a reaction-field exclusion correction needed? */
-        if (EEL_RF(fr->eeltype) && eelRF_NEC != fr->eeltype)
+        if ((EEL_RF(fr->eeltype) && eelRF_NEC != fr->eeltype) ||
+            fr->eeltype == eelZQ)
         {
             /* With the Verlet scheme, exclusion forces are calculated
              * in the non-bonded kernel.
