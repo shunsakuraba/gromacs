@@ -728,7 +728,7 @@ static void do_nb_verlet(t_forcerec *fr,
     }
     else if ((!bCUDA && nbvg->ewald_excl == ewaldexclAnalytical) ||
              (bCUDA && nbnxn_cuda_is_kernel_ewald_analytical(fr->nbv->cu_nbv)) ||
-             (ic->eeltype == eelZD))
+             (ic->eeltype == eelZD)) /* ZD TODO FIXME: make new kernel for alpha != 0 */
     {
         enr_nbnxn_kernel_ljc = eNR_NBNXN_LJ_EWALD;
     }
