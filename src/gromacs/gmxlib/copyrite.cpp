@@ -591,7 +591,12 @@ void please_cite(FILE *fp, const char *key)
           "Fukuda Ikuo, Yonezawa Yasushige, Nakamura Haruki",
           "Molecular dynamics scheme for precise estimation of electrostatic interaction via zero-dipole summation principle",
           "Journal of Chemical Physics",
-         134, 2011, "164107" }
+         134, 2011, "164107" },
+        { "Fukuda2014",
+          "Fukuda Ikuo, Narutoshi Kamiya, and Nakamura Haruki",
+          "The zero-multipole summation method for estimating electrostatic interactions in molecular dynamics: Analysis of the accuracy and application to liquid systems",
+          "Journal of Chemical Physics",
+          140, 2014, "194307" }
     };
 #define NSTR (int)asize(citedb)
 

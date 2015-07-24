@@ -289,6 +289,7 @@ void calc_zqfac(FILE *fplog, int eel, real alpha, real Rc,
 
         if(fplog)
         {
+            please_cite(fplog, "Fukuda2014");
             fprintf(fplog, "%s:\n"
                     "alpha = %g, rc = %g, d1 = %g, d2 = %g, k2zq = %g, k4zq = %g, uzq(Rc) = %g\n",
                     eel_names[eel], alpha, Rc, d1, d2, *k2zq, *k4zq, *czq);
