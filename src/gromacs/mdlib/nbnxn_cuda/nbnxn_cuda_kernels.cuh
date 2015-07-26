@@ -118,6 +118,14 @@
 #undef EL_RF
 
 
+/* Analytical reaction-field kernels */
+#define EL_ZQ
+#define NB_KERNEL_FUNC_NAME(x,...) x##_zq##__VA_ARGS__
+#include "nbnxn_cuda_kernel_legacy.cuh"
+#include "nbnxn_cuda_kernel.cuh"
+#undef EL_ZQ
+#undef NB_KERNEL_FUNC_NAME
+
 /* Analytical Ewald interaction kernels
  */
 #define EL_EWALD_ANA
