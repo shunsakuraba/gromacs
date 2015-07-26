@@ -102,7 +102,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     const real *  VFtab    = NULL;
     const real *  x;
     real *        f;
-    real          facel, krf, crf;
+    real          facel, krf, crf, kzq2, kzq4, czq;
     const real *  chargeA;
     const real *  chargeB;
     real          sigma6_min, sigma6_def, lam_power, sc_power, sc_r_power;
@@ -156,6 +156,9 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     facel               = fr->epsfac;
     krf                 = fr->k_rf;
     crf                 = fr->c_rf;
+    kzq2                = fr->k_zq_2;
+    kzq4                = fr->k_zq_4;
+    czq                 = fr->c_zq;
     ewc_lj              = fr->ewaldcoeff_lj;
     Vc                  = kernel_data->energygrp_elec;
     typeA               = mdatoms->typeA;
@@ -250,7 +253,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     }
     else
     {
-        bExactElecCutoff = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || fr->eeltype == eelZD;
+        bExactElecCutoff = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || fr->eeltype == eelZD || fr->eeltype == eelZQ;
         bExactVdwCutoff  = (fr->vdw_modifier != eintmodNONE);
     }
 
@@ -538,6 +541,12 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
                                     /* reaction-field */
                                     Vcoul[i]   = qq[i]*(rinvC + krf*rC*rC-crf);
                                     FscalC[i]  = qq[i]*(rinvC - 2.0*krf*rC*rC);
+                                    break;
+
+                                case GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE:
+                                    /* Zero-quadrupole */
+                                    Vcoul[i]   = qq[i]*(rinvC + (kzq2 + kzq4 * rC * rC) * rC * rC - czq);
+                                    FscalC[i]  = qq[i]*(rinvC - (2.0 * kzq2 + 4.0 * kzq4 * rC * rC) * rC * rC);
                                     break;
 
                                 case GMX_NBKERNEL_ELEC_CUBICSPLINETABLE:
