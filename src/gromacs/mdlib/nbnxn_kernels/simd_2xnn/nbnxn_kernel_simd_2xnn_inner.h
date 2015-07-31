@@ -77,7 +77,7 @@
  * This is only faster with icc on Sandy Bridge (PS kernel slower than gcc 4.7).
  * Tested with icc 13.
  */
-#if defined CALC_COUL_EWALD && defined __INTEL_COMPILER && defined GMX_SIMD_X86_AVX_256_OR_HIGHER
+#if (defined CALC_COUL_EWALD || defined CALC_COUL_ZMNZ) && defined __INTEL_COMPILER && defined GMX_SIMD_X86_AVX_256_OR_HIGHER
 #define NBNXN_CUTOFF_USE_BLENDV
 #endif
 #endif
@@ -141,7 +141,7 @@
     gmx_simd_real_t  fsub_S0;
     gmx_simd_real_t  fsub_S2;
 #endif
-#ifdef CALC_COUL_EWALD
+#if defined CALC_COUL_EWALD || defined CALC_COUL_ZMNZ
     gmx_simd_real_t  brsq_S0, brsq_S2;
     gmx_simd_real_t  ewcorr_S0, ewcorr_S2;
 #endif
@@ -164,7 +164,7 @@
     gmx_simd_real_t  ctabv_S2;
 #endif
 #endif
-#if defined CALC_ENERGIES && (defined CALC_COUL_EWALD || defined CALC_COUL_TAB)
+#if defined CALC_ENERGIES && (defined CALC_COUL_EWALD || defined CALC_COUL_ZMNZ || defined CALC_COUL_TAB)
     /* The potential (PME mesh) we need to subtract from 1/r */
     gmx_simd_real_t  vc_sub_S0;
     gmx_simd_real_t  vc_sub_S2;
@@ -449,7 +449,7 @@
 #endif
 #endif
 
-#ifdef CALC_COUL_EWALD
+#if defined CALC_COUL_EWALD || defined CALC_COUL_ZMNZ
     /* We need to mask (or limit) rsq for the cut-off,
      * as large distances can cause an overflow in gmx_pmecorrF/V.
      */
@@ -463,15 +463,26 @@
 #endif
     ewcorr_S0   = gmx_simd_mul_r(gmx_simd_pmecorrF_r(brsq_S0), beta_S);
     ewcorr_S2   = gmx_simd_mul_r(gmx_simd_pmecorrF_r(brsq_S2), beta_S);
+#ifdef CALC_COUL_EWALD
     frcoul_S0   = gmx_simd_mul_r(qq_S0, gmx_simd_fmadd_r(ewcorr_S0, brsq_S0, rinv_ex_S0));
     frcoul_S2   = gmx_simd_mul_r(qq_S2, gmx_simd_fmadd_r(ewcorr_S2, brsq_S2, rinv_ex_S2));
+#else
+    /* CALC_COUL_ZMNZ */
+    /* We need to add correction terms for Zero-multipole */
+    frcoul_S0   = gmx_simd_mul_r(qq_S0, gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, mzq_5_S, mzq_3_S), gmx_simd_fmadd_r(ewcorr_S0, brsq_S0, rinv_ex_S0));
+    frcoul_S2   = gmx_simd_mul_r(qq_S2, gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, mzq_5_S, mzq_3_S), gmx_simd_fmadd_r(ewcorr_S2, brsq_S2, rinv_ex_S2));
+#endif
 
 #ifdef CALC_ENERGIES
     vc_sub_S0   = gmx_simd_mul_r(gmx_simd_pmecorrV_r(brsq_S0), beta_S);
     vc_sub_S2   = gmx_simd_mul_r(gmx_simd_pmecorrV_r(brsq_S2), beta_S);
+#ifdef CALC_COUL_ZMNZ
+    vcoul_S0    = gmx_simd_mul_r(qq_S0, gmx_simd_add_r(vc_sub_S0, gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_add_r(vc_sub_S2, gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, hzq_5_S, hzq_3_S), moh_zq_S)));
+#endif
 #endif
 
-#endif /* CALC_COUL_EWALD */
+#endif /* defined CALC_COUL_EWALD || defined CALC_COUL_ZMNZ */
 
 #ifdef CALC_COUL_TAB
     /* Electrostatic interactions */

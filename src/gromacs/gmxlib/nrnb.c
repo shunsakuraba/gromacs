@@ -102,6 +102,8 @@ static const t_nrnb_data nbdata[eNRNB] = {
     { "NxN RF Elec. + LJ [V&F]",        54 },
     { "NxN ZQ Elec. + LJ [F]",          40 }, /* nbnxn kernel LJ+ZQ, no ener */
     { "NxN ZQ Elec. + LJ [V&F]",        59 },
+    { "NxN ZQ-NZ Elec. + LJ [F]",       70 }, /* nbnxn kernel LJ+ZQ, alpha!=0, no ener (XXX: flops count) */
+    { "NxN ZQ-NZ Elec. + LJ [V&F]",    113 },
     { "NxN QSTab Elec. + LJ [F]",       41 }, /* nbnxn kernel LJ+tab, no en */
     { "NxN QSTab Elec. + LJ [V&F]",     59 },
     { "NxN Ewald Elec. + LJ [F]",       66 }, /* nbnxn kernel LJ+Ewald, no en */
@@ -112,6 +114,8 @@ static const t_nrnb_data nbdata[eNRNB] = {
     { "NxN RF Electrostatics [V&F]",    36 },
     { "NxN ZQ Electrostatics [F]",      33 }, /* nbnxn kernel ZQ, no ener */
     { "NxN ZQ Electrostatics [V&F]",    41 },
+    { "NxN ZQ-NZ Electrostatics [F]",   65 }, /* nbnxn kernel ZQ, alpha!=0, no ener (XXX: flops count) */
+    { "NxN ZQ-NZ Electrostatics [V&F]", 90 },
     { "NxN QSTab Elec. [F]",            34 }, /* nbnxn kernel tab, no ener */
     { "NxN QSTab Elec. [V&F]",          41 },
     { "NxN Ewald Elec. [F]",            61 }, /* nbnxn kernel Ewald, no ener */

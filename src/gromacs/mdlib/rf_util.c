@@ -275,9 +275,6 @@ void calc_zqfac(FILE *fplog, int eel, real alpha, real Rc,
     if(eel == eelZQ)
     {
         real arc, d1, d2;
-        if(alpha != 0.0) {
-            gmx_fatal(FARGS, "Current ZQ implementation does not support alpha /= 0.");
-        }
         arc = alpha * Rc;
  
         d1 = 1. * pow(Rc, -2.0) * (gmx_erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);

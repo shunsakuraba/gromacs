@@ -51,7 +51,7 @@
 #define EL_EWALD_ANY
 #endif
 
-#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZQ || defined LJ_EWALD || (defined EL_CUTOFF && defined CALC_ENERGIES)
+#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZQ || defined EL_ZMNZ || defined LJ_EWALD || (defined EL_CUTOFF && defined CALC_ENERGIES)
 /* Macro to control the calculation of exclusion forces in the kernel
  * We do that with Ewald (elec/vdw) and RF. Cut-off only has exclusion
  * energy terms.
@@ -118,14 +118,14 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #ifdef EL_RF
     float two_k_rf              = nbparam.two_k_rf;
 #endif
-#ifdef EL_ZQ
+#if defined EL_ZQ || defined EL_ZMNZ
     float two_k2_zq             = nbparam.two_k2_zq;
     float four_k4_zq            = nbparam.four_k4_zq;
 #endif
 #ifdef EL_EWALD_TAB
     float coulomb_tab_scale     = nbparam.coulomb_tab_scale;
 #endif
-#ifdef EL_EWALD_ANA
+#if defined EL_EWALD_ANA || defined EL_ZMNZ
     float beta2                 = nbparam.ewald_beta*nbparam.ewald_beta;
     float beta3                 = nbparam.ewald_beta*nbparam.ewald_beta*nbparam.ewald_beta;
 #endif
@@ -134,15 +134,15 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #endif
 
 #ifdef CALC_ENERGIES
-#ifdef EL_EWALD_ANY
+#if defined EL_EWALD_ANY
     float  beta        = nbparam.ewald_beta;
     float  ewald_shift = nbparam.sh_ewald;
-#else
-#ifdef EL_ZQ
+#elif defined EL_ZMNZ
+    float  beta        = nbparam.ewald_beta;
+#elif defined EL_ZQ || defined EL_ZMNZ
     float  c_zq        = nbparam.c_zq;
 #else
     float  c_rf        = nbparam.c_rf;
-#endif
 #endif /* EL_EWALD_ANY */
     float *e_lj        = atdat.e_lj;
     float *e_el        = atdat.e_el;
@@ -232,7 +232,7 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
         /* we have the diagonal: add the charge and LJ self interaction energy term */
         for (i = 0; i < NCL_PER_SUPERCL; i++)
         {
-#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZQ || defined EL_CUTOFF
+#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZQ || defined EL_ZMNZ || defined EL_CUTOFF
             qi    = xqib[i * CL_SIZE + tidxi].w;
             E_el += qi*qi;
 #endif
@@ -253,10 +253,14 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
         E_lj *= 0.5f*ONE_SIXTH_F*lje_coeff6_6;
 #endif  /* LJ_EWALD */
 
-#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZQ || defined EL_CUTOFF
+#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZQ || defined EL_ZMNZ || defined EL_CUTOFF
         E_el /= CL_SIZE;
-#if defined EL_RF || defined EL_ZQ || defined EL_CUTOFF
+#if defined EL_RF || defined EL_CUTOFF
         E_el *= -nbparam.epsfac*0.5f*c_rf;
+#elif defined EL_ZQ
+        E_el *= -nbparam.epsfac*0.5f*c_zq;
+#elif defined EL_ZMNZ
+        E_el *= -nbparam.epsfac * (beta * M_FLOAT_1_SQRTPI + 0.5f * c_zq);
 #else
         E_el *= -nbparam.epsfac*beta*M_FLOAT_1_SQRTPI; /* last factor 1/sqrt(pi) */
 #endif
@@ -457,6 +461,9 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #ifdef EL_ZQ
                                 F_invr  += qi * qj_f * (int_bit*inv_r2 * inv_r - two_k2_zq - four_k4_zq * r2);
 #endif
+#ifdef EL_ZMNZ
+                                F_invr  += qi * qj_f * (int_bit * inv_r2 * inv_r + pmecorrF(beta2 * r2) * beta3 - two_k2_zq - four_k4_zq * r2);
+#endif
 #if defined EL_EWALD_ANA
                                 F_invr  += qi * qj_f * (int_bit*inv_r2*inv_r + pmecorrF(beta2*r2)*beta3);
 #elif defined EL_EWALD_TAB
@@ -478,6 +485,9 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #endif
 #ifdef EL_ZQ
                                 E_el    += qi * qj_f * (int_bit*inv_r + r2 * (0.5f * two_k2_zq + 0.25f * four_k4_zq * r2) - c_zq);
+#endif
+#ifdef EL_ZMNZ
+                                E_el    += qi * qj_f * (inv_r * (int_bit - erff(r2 * inv_r * beta)) + 0.5f * two_k2_zq * r2 + 0.25f * four_k4_zq - c_zq);
 #endif
 #ifdef EL_EWALD_ANY
                                 /* 1.0f - erff is faster than erfcf */
