@@ -1108,9 +1108,12 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
            ir->epsilon_rf = 0;
            ir->coulombtype = eelRF_ZERO;
        }
+    }
+    if (ir->coulombtype == eelZD || ir->coulombtype == eelZQ)
+    {
         if(ir->zd_alpha != 0 && ir->zd_alpha <= 0.2) {
            /* It is very likely to cause a mistake that zd's alpha is confused to be (AA^-1) instead of (nm^-1).  */
-           sprintf(warn_buf, "Zero-dipole dumping coefficient is too small. The value is typically around 1.0 (nm^-1). Perhaps you used (AA^-1)?");
+           sprintf(warn_buf, "Zero-multipole dumping coefficient is too small. The value is typically around 1.0 (nm^-1). Perhaps you used (AA^-1)?");
            warning(wi, warn_buf);
        }
     }
@@ -1141,10 +1144,6 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
     }
     if (ir->coulombtype == eelZQ)
     {
-        if (ir->zd_alpha != 0.0)
-        {
-            warning_error(wi, "Current Zero-quadrupole implementation only supports zd_alpha = 0");
-        }
         if (ir->cutoff_scheme != ecutsVERLET)
         {
             warning_error(wi, "Current Zero-quadrupole implementation only supports Verlet cutoff scheme");

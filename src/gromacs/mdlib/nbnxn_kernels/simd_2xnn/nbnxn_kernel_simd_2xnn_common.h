@@ -36,7 +36,7 @@
 #include "gromacs/simd/simd_math.h"
 #include "gromacs/simd/vector_operations.h"
 #include "../../nbnxn_consts.h"
-#ifdef CALC_COUL_EWALD
+#if (defined CALC_COUL_EWALD || defined CALC_COUL_ZMNZ)
 #include "gromacs/math/utilities.h"
 #endif
 

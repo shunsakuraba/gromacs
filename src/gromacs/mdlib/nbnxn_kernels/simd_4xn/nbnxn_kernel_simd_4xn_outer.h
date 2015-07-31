@@ -106,7 +106,7 @@
 #endif
 #endif
 
-#ifdef CALC_COUL_ZQ
+#if defined CALC_COUL_ZQ || defined CALC_COUL_ZMNZ
     gmx_simd_real_t      mzq_3_S, mzq_5_S;
 #ifdef CALC_ENERGIES
     gmx_simd_real_t      hzq_3_S, hzq_5_S, moh_zq_S;
@@ -130,7 +130,7 @@
 #endif
 #endif
 
-#ifdef CALC_COUL_EWALD
+#if defined CALC_COUL_EWALD || defined CALC_COUL_ZMNZ
     gmx_simd_real_t beta2_S, beta_S;
 #endif
 
@@ -279,7 +279,7 @@
 #endif
 #endif
 
-#ifdef CALC_COUL_ZQ
+#if defined CALC_COUL_ZQ || defined CALC_COUL_ZMNZ
     mzq_3_S = gmx_simd_set1_r(-2*ic->k_zq_2);
     mzq_5_S = gmx_simd_set1_r(-4*ic->k_zq_4);
 #ifdef CALC_ENERGIES
@@ -312,6 +312,11 @@
 #ifdef CALC_COUL_EWALD
     beta2_S = gmx_simd_set1_r(ic->ewaldcoeff_q*ic->ewaldcoeff_q);
     beta_S  = gmx_simd_set1_r(ic->ewaldcoeff_q);
+#endif
+
+#ifdef CALC_COUL_ZMNZ
+    beta2_S = gmx_simd_set1_r(ic->zd_alpha*ic->zd_alpha);
+    beta_S  = gmx_simd_set1_r(ic->zd_alpha);
 #endif
 
 #if (defined CALC_COUL_TAB || defined CALC_COUL_EWALD) && defined CALC_ENERGIES
@@ -510,6 +515,10 @@
 #ifdef CALC_COUL_EWALD
                 /* beta/sqrt(pi) */
                 Vc_sub_self = 0.5*ic->ewaldcoeff_q*M_2_SQRTPI;
+#endif
+#ifdef CALC_COUL_ZMNZ
+                /* beta/sqrt(pi) */
+                Vc_sub_self = 0.5 * (ic->c_zq + ic->zd_alpha * M_2_SQRTPI);
 #endif
 
                 for (ia = 0; ia < UNROLLI; ia++)
