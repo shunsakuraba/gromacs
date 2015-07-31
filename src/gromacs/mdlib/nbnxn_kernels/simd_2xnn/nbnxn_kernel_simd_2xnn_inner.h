@@ -469,8 +469,8 @@
 #else
     /* CALC_COUL_ZMNZ */
     /* We need to add correction terms for Zero-multipole */
-    frcoul_S0   = gmx_simd_mul_r(qq_S0, gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, mzq_5_S, mzq_3_S), gmx_simd_fmadd_r(ewcorr_S0, brsq_S0, rinv_ex_S0));
-    frcoul_S2   = gmx_simd_mul_r(qq_S2, gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, mzq_5_S, mzq_3_S), gmx_simd_fmadd_r(ewcorr_S2, brsq_S2, rinv_ex_S2));
+    frcoul_S0   = gmx_simd_mul_r(qq_S0, gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, mzq_5_S, mzq_3_S), gmx_simd_fmadd_r(ewcorr_S0, brsq_S0, rinv_ex_S0)));
+    frcoul_S2   = gmx_simd_mul_r(qq_S2, gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, mzq_5_S, mzq_3_S), gmx_simd_fmadd_r(ewcorr_S2, brsq_S2, rinv_ex_S2)));
 #endif
 
 #ifdef CALC_ENERGIES
