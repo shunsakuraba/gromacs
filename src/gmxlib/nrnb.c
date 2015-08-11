@@ -107,6 +107,8 @@ static const t_nrnb_data nbdata[eNRNB] = {
      */
     { "NxN RF Elec. + VdW [F]",         38 }, /* nbnxn kernel LJ+RF, no ener */
     { "NxN RF Elec. + VdW [V&F]",       54 },
+    { "NxN ZQ Elec. + Vdw [F]",         40 }, /* nbnxn kernel LJ+ZQ, no ener */
+    { "NxN ZQ Electrostatics [V&F]",    59 },
     { "NxN QSTab Elec. + VdW [F]",      41 }, /* nbnxn kernel LJ+tab, no en */
     { "NxN QSTab Elec. + VdW [V&F]",    59 },
     { "NxN Ewald Elec. + VdW [F]",      66 }, /* nbnxn kernel LJ+Ewald, no en */
