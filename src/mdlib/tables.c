@@ -904,6 +904,10 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
                 /* No need for preventing the usage of modifiers with RF */
                 Vcut  = 0.0;
                 break;
+            case etabZD:
+            case etabZQ:
+                Vcut = 0.0;
+                break;
             case etabEXPMIN:
                 Vcut  = exp(-rc);
                 break;
