@@ -243,6 +243,10 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
         {
             icoul        = GMX_NBKERNEL_ELEC_EWALD;
         }
+        else if (ic->eeltype == eelZQ)
+        {
+            icoul        = GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE;
+        }
         else
         {
             gmx_incons("Unsupported eeltype with Verlet and free-energy");
