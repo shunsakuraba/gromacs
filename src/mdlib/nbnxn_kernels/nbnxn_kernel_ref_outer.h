@@ -173,8 +173,8 @@ NBK_FUNC_NAME(nbnxn_kernel_ref, energrp)
     k2_zq2 = 2*ic->k2_zq;
     k2_zq4 = 4*ic->k4_zq;
 #ifdef CALC_ENERGIES
-    k2_zq = ic->k2zq;
-    k4_zq = ic->k4zq;
+    k2_zq = ic->k2_zq;
+    k4_zq = ic->k4_zq;
     c_zq = ic->c_zq;
 #endif
 #endif
