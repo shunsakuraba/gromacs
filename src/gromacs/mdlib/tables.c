@@ -79,6 +79,7 @@ enum {
     etabEXPMIN,
     etabUSER,
     etabZD,
+    etabZQ,
     etabNR
 };
 
@@ -115,6 +116,7 @@ static const t_tab_props tprops[etabNR] = {
     { "COUL-Encad shift",  TRUE },
     { "EXPMIN", FALSE },
     { "Zero-Dipole", TRUE },
+    { "Zero-Quadrupole", TRUE },
     { "USER", FALSE },
 };
 
@@ -980,6 +982,7 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
             case etabRF:
             case etabRF_ZERO:
             case etabZD:
+            case etabZQ:
                 /* No need for preventing the usage of modifiers with RF */
                 Vcut  = 0.0;
                 break;
@@ -1150,6 +1153,21 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
                 if (debug)
                 {
                     fprintf(debug, "etabZD at %g: V=%g, F=%g\n", r, Vtab, Ftab);
+                }
+                break;
+            case etabZQ:
+                if(r < rc) {
+                    Vtab  = gmx_erfc(fr->zd_alpha * r) / r - gmx_erfc(fr->zd_alpha * rc) / rc + fr->k_zq_2 * (r * r - rc * rc) + fr->k_zq_4 * (pow(r, 4) - pow(rc, 4));
+                    Ftab = gmx_erfc(fr->zd_alpha * r) / r2 + fr->zd_alpha * M_2_SQRTPI * exp(- fr->zd_alpha*fr->zd_alpha * r2) / r - 2 * fr->k_zq_2 * r - 4 * fr->k_zq_4 * r * r * r;
+                }
+                else
+                {
+                    Vtab = 0;
+                    Ftab = 0;
+                }
+                if (debug)
+                {
+                    fprintf(debug, "etabZQ at %g: V=%g, F=%g\n", r, Vtab, Ftab);
                 }
                 break;
             case etabEXPMIN:
@@ -1324,6 +1342,9 @@ static void set_table_type(int tabsel[], const t_forcerec *fr, gmx_bool b14only)
             break;
         case eelZD:
             tabsel[etiCOUL] = etabZD;
+            break;
+        case eelZQ:
+            tabsel[etiCOUL] = etabZQ;
             break;
         case eelSWITCH:
             tabsel[etiCOUL] = etabCOULSwitch;
