@@ -540,13 +540,14 @@
 #endif
 #endif
 
+    vcoul_S0    = gmx_simd_mul_r(qq_S0, gmx_simd_sub_r(rinv_ex_S0, vc_sub_S0));
+    vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_sub_r(rinv_ex_S2, vc_sub_S2));
+
+#endif
+
 #if (defined CALC_ENERGIES && defined CALC_COUL_ZMNZ)
     vcoul_S0    = gmx_simd_mul_r(qq_S0, gmx_simd_add_r(gmx_simd_sub_r(rinv_ex_S0, vc_sub_S0), gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, hzq_5_S, hzq_3_S), moh_zq_S)));
     vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_add_r(gmx_simd_sub_r(rinv_ex_S2, vc_sub_S2), gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, hzq_5_S, hzq_3_S), moh_zq_S)));
-#else
-    vcoul_S0    = gmx_simd_mul_r(qq_S0, gmx_simd_sub_r(rinv_ex_S0, vc_sub_S0));
-    vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_sub_r(rinv_ex_S2, vc_sub_S2));
-#endif
 #endif
 
 #ifdef CALC_ENERGIES
