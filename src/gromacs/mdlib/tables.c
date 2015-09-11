@@ -189,6 +189,33 @@ double v_q_zd_lr(double beta, double r, double rc)
     }
 }
 
+/* returns 1/r - v(r) */
+double v_q_zq_lr(double beta, double r, double rc)
+{
+    /* don't use calc_zqfac because this requires double precision */
+    double arc = beta * rc;
+    double d1 = 1. * pow(rc, -2.0) * (gmx_erfcd(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);
+    double d2 = 2. * pow(rc, -3.0) * (gmx_erfcd(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + pow(arc, 3.0)));
+    
+    double k2, k4, c;
+    k2 =   3. / 4. * d1 / rc + 1. / 4. * d2;
+    k4 = - 1. / 8. * d1 / pow3(rc) - 1. / 8. * d2 / pow2(rc);
+    c = gmx_erfcd(arc) / rc + k2 * pow2(rc) + k4 * pow4(rc);
+
+    if (r == 0)
+    {
+        return c + beta*2/sqrt(M_PI);
+    }
+    else if (r >= rc)
+    {
+         return 1.0 / r;
+    }
+    else
+    {
+      return gmx_erfd(beta*r) / r - k2 * pow2(r) - k4 * pow4(r) + c;
+    }
+}
+
 void table_spline3_fill_ewald_lr(real                                 *table_f,
                                  real                                 *table_v,
                                  real                                 *table_fdv0,

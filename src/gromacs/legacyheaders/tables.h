@@ -79,6 +79,10 @@ double v_lj_ewald_lr(double beta, double r, double);
 double v_q_zd_lr(double beta, double r, double rc);
 /* Return the (1/r) - V(r) for zero-dipole summation */
 
+double v_q_zq_lr(double beta, double r, double rc);
+/* Return the (1/r) - V(r) for zero-quadrupole summation */
+
+
 #ifdef __cplusplus
 }
 #endif
