@@ -592,12 +592,6 @@
     vc_sub_S1   = gmx_simd_mul_r(gmx_simd_pmecorrV_r(brsq_S1), beta_S);
     vc_sub_S2   = gmx_simd_mul_r(gmx_simd_pmecorrV_r(brsq_S2), beta_S);
     vc_sub_S3   = gmx_simd_mul_r(gmx_simd_pmecorrV_r(brsq_S3), beta_S);
-#ifdef CALC_COUL_ZMNZ
-    vcoul_S0    = gmx_simd_mul_r(qq_S0, gmx_simd_add_r(vc_sub_S0, gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, hzq_5_S, hzq_3_S), moh_zq_S)));
-    vcoul_S1    = gmx_simd_mul_r(qq_S1, gmx_simd_add_r(vc_sub_S1, gmx_simd_fmadd_r(rsq_S1, gmx_simd_fmadd_r(rsq_S1, hzq_5_S, hzq_3_S), moh_zq_S)));
-    vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_add_r(vc_sub_S2, gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, hzq_5_S, hzq_3_S), moh_zq_S)));
-    vcoul_S3    = gmx_simd_mul_r(qq_S3, gmx_simd_add_r(vc_sub_S3, gmx_simd_fmadd_r(rsq_S3, gmx_simd_fmadd_r(rsq_S3, hzq_5_S, hzq_3_S), moh_zq_S)));
-#endif
 #endif
 
 #endif /* CALC_COUL_EWALD */
@@ -675,8 +669,8 @@
 #endif
 #endif /* CALC_COUL_TAB */
 
-#if defined CALC_ENERGIES && (defined CALC_COUL_EWALD || defined CALC_COUL_TAB)
-#ifndef NO_SHIFT_EWALD
+#if defined CALC_ENERGIES && (defined CALC_COUL_EWALD || defined CALC_COUL_TAB || defined CALC_COUL_ZMNZ)
+#if (!defined NO_SHIFT_EWALD) && (!defined CALC_COUL_ZMNZ)
     /* Add Ewald potential shift to vc_sub for convenience */
 #ifdef CHECK_EXCLS
     vc_sub_S0   = gmx_simd_add_r(vc_sub_S0, gmx_simd_blendzero_r(sh_ewald_S, interact_S0));
@@ -696,6 +690,12 @@
     vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_sub_r(rinv_ex_S2, vc_sub_S2));
     vcoul_S3    = gmx_simd_mul_r(qq_S3, gmx_simd_sub_r(rinv_ex_S3, vc_sub_S3));
 
+#endif
+#if (defined CALC_ENERGIES && defined CALC_COUL_ZMNZ)
+    vcoul_S0    = gmx_simd_mul_r(qq_S0, gmx_simd_add_r(gmx_simd_sub_r(rinv_ex_S0, vc_sub_S0), gmx_simd_fmadd_r(rsq_S0, gmx_simd_fmadd_r(rsq_S0, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S1    = gmx_simd_mul_r(qq_S1, gmx_simd_add_r(gmx_simd_sub_r(rinv_ex_S1, vc_sub_S1), gmx_simd_fmadd_r(rsq_S1, gmx_simd_fmadd_r(rsq_S1, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S2    = gmx_simd_mul_r(qq_S2, gmx_simd_add_r(gmx_simd_sub_r(rinv_ex_S2, vc_sub_S2), gmx_simd_fmadd_r(rsq_S2, gmx_simd_fmadd_r(rsq_S2, hzq_5_S, hzq_3_S), moh_zq_S)));
+    vcoul_S3    = gmx_simd_mul_r(qq_S3, gmx_simd_add_r(gmx_simd_sub_r(rinv_ex_S3, vc_sub_S3), gmx_simd_fmadd_r(rsq_S3, gmx_simd_fmadd_r(rsq_S3, hzq_5_S, hzq_3_S), moh_zq_S)));
 #endif
 
 #ifdef CALC_ENERGIES
