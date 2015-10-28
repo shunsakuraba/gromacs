@@ -969,10 +969,10 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     }
     else if (ir->coulombtype == eelZQ)
     {
+        /* The first and second derivative of the energy function at Rc are both 0 in ZQ.
+           Perhaps we should add third order derivative for more precise estimation? */
         md1_el = 0.0;
-        /* The first and second derivative of energy function at Rc are both 0 in ZQ. This drives energy drift prediction wrong.
-           Here we add a small d2_el value to let it evaluate conservatively */
-        d2_el = 0.25 * elfac* pow(ir->rcoulomb, -3.0);
+        d2_el = 0.0;
     }
     else if (EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD)
     {
