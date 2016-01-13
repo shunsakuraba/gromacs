@@ -50,6 +50,7 @@
 #include "calc_verletbuf.h"
 #include "../mdlib/nbnxn_consts.h"
 #include "../mdlib/nbnxn_simd.h"
+#include "force.h"
 
 #ifdef GMX_NBNXN_SIMD
 /* The include below sets the SIMD instruction type (precision+width)
@@ -554,7 +555,7 @@ static real ener_drift(const verletbuf_atomtype_t *att, int natt,
                        real kT_fac,
                        real md1_ljd, real d2_ljd, real md3_ljd,
                        real md1_ljr, real d2_ljr, real md3_ljr,
-                       real md1_el,  real d2_el,
+                       real md1_el,  real d2_el,  real md3_el,
                        real r_buffer,
                        real rlist, real boxvol)
 {
@@ -602,10 +603,11 @@ static real ener_drift(const verletbuf_atomtype_t *att, int natt,
                 d2_ljr*ffp->iparams[ti*ffp->atnr+tj].lj.c12 +
                 d2_el*att[i].prop.q*att[j].prop.q;
 
-            /* -d3V/dr3 at the cut-off for LJ, we neglect Coulomb */
+            /* -d3V/dr3 at the cut-off for LJ, we neglect Coulomb (except ZQ) */
             md3 =
                 md3_ljd*ffp->iparams[ti*ffp->atnr+tj].lj.c6 +
-                md3_ljr*ffp->iparams[ti*ffp->atnr+tj].lj.c12;
+                md3_ljr*ffp->iparams[ti*ffp->atnr+tj].lj.c12 +
+                md3_el*att[i].prop.q*att[j].prop.q;
 
             rsh    = r_buffer;
             sc_fac = 1.0;
@@ -792,7 +794,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     double                reppow;
     real                  md1_ljd, d2_ljd, md3_ljd;
     real                  md1_ljr, d2_ljr, md3_ljr;
-    real                  md1_el,  d2_el;
+    real                  md1_el,  d2_el,  md3_el;
     real                  elfac;
     real                  kT_fac, mass_min;
     int                   ib0, ib1, ib;
@@ -932,9 +934,10 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     /* Determine md=-dV/dr and dd=d^2V/dr^2 */
     md1_el = 0;
     d2_el  = 0;
+    md3_el = 0; /* only used for ZQ */
     if (ir->coulombtype == eelCUT || EEL_RF(ir->coulombtype) || ir->coulombtype == eelZD)
     {
-        real eps_rf, k_rf, k_2_zq, k_4_zq;
+        real eps_rf, k_rf;
 
         if (ir->coulombtype == eelCUT)
         {
@@ -969,10 +972,17 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     }
     else if (ir->coulombtype == eelZQ)
     {
-        /* The first and second derivative of the energy function at Rc are both 0 in ZQ.
-           Perhaps we should add third order derivative for more precise estimation? */
+        real k2zq, k4zq, czq, expma2r2;
+        calc_zqfac(NULL, ir->coulombtype, ir->zd_alpha, ir->rcoulomb, &k2zq, &k4zq, &czq);
+        /* The first and second derivative of the energy function at Rc are both 0 in ZQ. */
         md1_el = 0.0;
         d2_el = 0.0;
+        expma2r2 = exp(- ir->zd_alpha * ir->zd_alpha * ir->rcoulomb * ir->rcoulomb);
+        md3_el = elfac * (6 * gmx_erfc(ir->zd_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -4.0)
+                          + expma2r2 / sqrt(M_PI) * (8.0 * pow(ir->zd_alpha, 5.0) * ir->rcoulomb
+                                                    + 8.0 * pow(ir->zd_alpha, 3.0) * pow(ir->rcoulomb, -1.0)
+                                                    + 12.0 * ir->zd_alpha * pow(ir->rcoulomb, -3.0)) 
+                          - 24 * k4zq * ir->rcoulomb);
     }
     else if (EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD)
     {
@@ -1067,7 +1077,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
                            kT_fac,
                            md1_ljd, d2_ljd, md3_ljd,
                            md1_ljr, d2_ljr, md3_ljr,
-                           md1_el,  d2_el,
+                           md1_el,  d2_el,  md3_el,
                            rb,
                            rl, boxvol);
 
