@@ -510,8 +510,8 @@
                 /* beta/sqrt(pi) */
                 Vc_sub_self = 0.5*ic->ewaldcoeff_q*M_2_SQRTPI;
 #endif
-#ifdef CALCL_COUL_ZMNZ
-                Vc_sub_self = 0.5 * (ic->c_zq + ic->zm_alpha * M_2_SQRTPI);
+#ifdef CALC_COUL_ZMNZ
+                Vc_sub_self = 0.5 * (ic->c_zq + ic->zd_alpha * M_2_SQRTPI);
 #endif
 
                 for (ia = 0; ia < UNROLLI; ia++)
