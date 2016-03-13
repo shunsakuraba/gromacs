@@ -244,9 +244,11 @@ typedef struct {
 
     /* Constants for Zero-dupole summation */
     real zd_alpha, zd_b, zd_c;
+    int zm_degree;
 
-    /* Constants for zero-quadrupole method */
-    real k_zq_2, k_zq_4, c_zq;
+    /* Constants for zero-quadrupole / octopole method */
+    /* FIXME TODO: rename to k_zm_* throughout sources */
+    real k_zq_2, k_zq_4, k_zq_6, c_zq;
 
     /* Charge sum and dipole for topology A/B ([0]/[1]) for Ewald corrections */
     double qsum[2];

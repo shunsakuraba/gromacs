@@ -555,7 +555,7 @@ static real ener_drift(const verletbuf_atomtype_t *att, int natt,
                        real kT_fac,
                        real md1_ljd, real d2_ljd, real md3_ljd,
                        real md1_ljr, real d2_ljr, real md3_ljr,
-                       real md1_el,  real d2_el,  real md3_el,
+                       real md1_el,  real d2_el,  real md3_el,  real d4_el,
                        real r_buffer,
                        real rlist, real boxvol)
 {
@@ -564,11 +564,11 @@ static real ener_drift(const verletbuf_atomtype_t *att, int natt,
      */
     const real erfc_arg_max = 8.0;
 
-    double     drift_tot, pot1, pot2, pot3, pot;
+    double     drift_tot, pot1, pot2, pot3, pot4, pot;
     int        i, j;
     real       s2i_2d, s2i_3d, s2j_2d, s2j_3d, s2, s;
     int        ti, tj;
-    real       md1, d2, md3;
+    real       md1, d2, md3, d4;
     real       sc_fac, rsh, rsh2;
     double     c_exp, c_erfc;
 
@@ -608,6 +608,10 @@ static real ener_drift(const verletbuf_atomtype_t *att, int natt,
                 md3_ljd*ffp->iparams[ti*ffp->atnr+tj].lj.c6 +
                 md3_ljr*ffp->iparams[ti*ffp->atnr+tj].lj.c12 +
                 md3_el*att[i].prop.q*att[j].prop.q;
+
+            /* d4V/dr4 at the cut-off for LJ, only with Zero-Multipole (l = 3) */
+            d4 =
+                d4_el*att[i].prop.q*att[j].prop.q;
 
             rsh    = r_buffer;
             sc_fac = 1.0;
@@ -670,17 +674,19 @@ static real ener_drift(const verletbuf_atomtype_t *att, int natt,
                 d2/6*(s*(rsh2 + 2*s2)*c_exp - rsh*(rsh2 + 3*s2)*c_erfc);
             pot3 = sc_fac*
                 md3/24*((rsh2*rsh2 + 6*rsh2*s2 + 3*s2*s2)*c_erfc - rsh*s*(rsh2 + 5*s2)*c_exp);
-            pot = pot1 + pot2 + pot3;
+            pot4 = sc_fac*
+                d4/120*(s * (8*s2*s2 + 9*rsh2*s2 + rsh2*rsh2)*c_exp - rsh*(15*s2*s2 + 10*rsh2*s2 + rsh2*rsh2)*c_erfc);
+            pot = pot1 + pot2 + pot3 + pot4;
 
             if (gmx_debug_at)
             {
-                fprintf(debug, "n %d %d d s %.3f %.3f %.3f %.3f con %d -d1 %8.1e d2 %8.1e -d3 %8.1e pot1 %8.1e pot2 %8.1e pot3 %8.1e pot %8.1e\n",
+                fprintf(debug, "n %d %d d s %.3f %.3f %.3f %.3f con %d -d1 %8.1e d2 %8.1e -d3 %8.1e pot1 %8.1e pot2 %8.1e pot3 %8.1e pot4 %8.1e pot %8.1e\n",
                         att[i].n, att[j].n,
                         sqrt(s2i_2d), sqrt(s2i_3d),
                         sqrt(s2j_2d), sqrt(s2j_3d),
                         att[i].prop.bConstr+att[j].prop.bConstr,
                         md1, d2, md3,
-                        pot1, pot2, pot3, pot);
+                        pot1, pot2, pot3, pot4, pot);
             }
 
             /* Multiply by the number of atom pairs */
@@ -794,7 +800,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     double                reppow;
     real                  md1_ljd, d2_ljd, md3_ljd;
     real                  md1_ljr, d2_ljr, md3_ljr;
-    real                  md1_el,  d2_el,  md3_el;
+    real                  md1_el,  d2_el,  md3_el, d4_el;
     real                  elfac;
     real                  kT_fac, mass_min;
     int                   ib0, ib1, ib;
@@ -934,7 +940,8 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     /* Determine md=-dV/dr and dd=d^2V/dr^2 */
     md1_el = 0;
     d2_el  = 0;
-    md3_el = 0; /* only used for ZQ */
+    md3_el = 0; /* only used for ZM (l=2) */
+    d4_el = 0;  /* only used for ZQ (l=3) */
     if (ir->coulombtype == eelCUT || EEL_RF(ir->coulombtype) || ir->coulombtype == eelZD)
     {
         real eps_rf, k_rf;
@@ -972,17 +979,35 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     }
     else if (ir->coulombtype == eelZQ)
     {
-        real k2zq, k4zq, czq, expma2r2;
-        calc_zqfac(NULL, ir->coulombtype, ir->zd_alpha, ir->rcoulomb, &k2zq, &k4zq, &czq);
-        /* The first and second derivative of the energy function at Rc are both 0 in ZQ. */
-        md1_el = 0.0;
-        d2_el = 0.0;
+        real k2zq, k4zq, k6zq, czq, expma2r2;
         expma2r2 = exp(- ir->zd_alpha * ir->zd_alpha * ir->rcoulomb * ir->rcoulomb);
-        md3_el = elfac * (6 * gmx_erfc(ir->zd_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -4.0)
-                          + expma2r2 / sqrt(M_PI) * (8.0 * pow(ir->zd_alpha, 5.0) * ir->rcoulomb
-                                                    + 8.0 * pow(ir->zd_alpha, 3.0) * pow(ir->rcoulomb, -1.0)
-                                                    + 12.0 * ir->zd_alpha * pow(ir->rcoulomb, -3.0)) 
-                          - 24 * k4zq * ir->rcoulomb);
+
+        if(ir->zm_degree == 2)
+        {
+            calc_zqfac(NULL, ir->coulombtype, ir->zd_alpha, ir->rcoulomb, &k2zq, &k4zq, &czq);
+            /* The first and second derivative of the energy function at Rc are both 0 in ZQ. */
+            md1_el = 0.0;
+            d2_el = 0.0;
+            md3_el = elfac * (6 * gmx_erfc(ir->zd_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -4.0)
+                              + expma2r2 / sqrt(M_PI) * (8.0 * pow(ir->zd_alpha, 5.0) * ir->rcoulomb
+                                                        + 8.0 * pow(ir->zd_alpha, 3.0) * pow(ir->rcoulomb, -1.0)
+                                                        + 12.0 * ir->zd_alpha * pow(ir->rcoulomb, -3.0)) 
+                              - 24 * k4zq * ir->rcoulomb);
+        }
+        else if(ir->zm_degree == 3)
+        {
+            calc_zofac(NULL, ir->coulombtype, ir->zd_alpha, ir->rcoulomb, &k2zq, &k4zq, &k6zq, &czq);
+            md1_el = 0.0;
+            d2_el = 0.0;
+            md3_el = 0.0;
+            d4_el = elfac * (24 * gmx_erfc(ir->zd_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -5.0)
+                             + expma2r2 / sqrt(M_PI) * (16.0 * pow(ir->zd_alpha, 7.0) * pow(ir->rcoulomb, 2.0)
+                                                        + 8.0 * pow(ir->zd_alpha, 5.0)
+                                                        + 32.0 * pow(ir->zd_alpha, 3.0) * pow(ir->rcoulomb, -2.0)
+                                                        + 48.0 * ir->zd_alpha * pow(ir->rcoulomb, -4.0))
+                             + 360 * k6zq * ir->rcoulomb * ir->rcoulomb
+                             + 24 * k4zq);
+        }
     }
     else if (EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD)
     {
@@ -1077,7 +1102,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
                            kT_fac,
                            md1_ljd, d2_ljd, md3_ljd,
                            md1_ljr, d2_ljr, md3_ljr,
-                           md1_el,  d2_el,  md3_el,
+                           md1_el,  d2_el,  md3_el,  d4_el,
                            rb,
                            rl, boxvol);
 

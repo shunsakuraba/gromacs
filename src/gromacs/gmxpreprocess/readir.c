@@ -1987,6 +1987,7 @@ void get_ir(const char *mdparin, const char *mdparout,
     RTYPE ("epsilon-rf",  ir->epsilon_rf, 0.0);
     CTYPE ("Parameter for the zero-dipole summation electrostatic");
     RTYPE ("zd-alpha",    ir->zd_alpha, 0.0);
+    ITYPE ("zm-degree",   ir->zm_degree, 2);
     CTYPE ("Method for doing Van der Waals");
     EETYPE("vdw-type",    ir->vdwtype,    evdw_names);
     EETYPE("vdw-modifier",    ir->vdw_modifier,    eintmod_names);

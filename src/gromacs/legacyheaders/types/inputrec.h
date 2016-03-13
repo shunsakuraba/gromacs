@@ -388,6 +388,7 @@ typedef struct {
     real            epsilon_r;               /* relative dielectric constant                 */
     real            epsilon_rf;              /* relative dielectric constant of the RF       */
     real            zd_alpha;                /* Dumping factor in zero-dipole method */
+    int             zm_degree;               /* Zero-multipole degree (1=Dipole, 2=Quadrupole, 3=Octopole) */
     int             implicit_solvent;        /* No (=explicit water), or GBSA solvent models */
     int             gb_algorithm;            /* Algorithm to use for calculation Born radii  */
     int             nstgbradii;              /* Frequency of updating Generalized Born radii */

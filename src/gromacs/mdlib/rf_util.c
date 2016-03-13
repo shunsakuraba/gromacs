@@ -294,6 +294,38 @@ void calc_zqfac(FILE *fplog, int eel, real alpha, real Rc,
     }
 }
 
+void calc_zofac(FILE *fplog, int eel, real alpha, real Rc,
+                real *k2zo, real *k4zo, real *k6zo, real *czo)
+{
+    if(eel == eelZQ)
+    {
+        real arc, d1, d2, d3;
+        arc = alpha * Rc;
+ 
+        d1 = 1. * pow(Rc, -2.0) * (gmx_erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);
+        d2 = 2. * pow(Rc, -3.0) * (gmx_erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + pow(arc, 3.0)));
+        d3 = 6. * pow(Rc, -4.0) * (gmx_erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + 2. / 3. * pow(arc, 3.0) + 2. / 3. * pow(arc, 5.0)));
+
+        *k2zo =  15. / 16. * d1 * pow(Rc, -1.0) + 7. / 16. * d2 * pow(Rc,  0.0) + 1. / 16. * d3 * pow(Rc,  1.0);
+        *k4zo = - 5. / 16. * d1 * pow(Rc, -3.0) - 5. / 16. * d2 * pow(Rc, -2.0) - 1. / 16. * d3 * pow(Rc, -1.0);
+        *k6zo =   1. / 16. * d1 * pow(Rc, -5.0) + 1. / 16. * d2 * pow(Rc, -4.0) + 1. / 48. * d3 * pow(Rc, -3.0);
+        *czo = (gmx_erfc(arc) / Rc + *k2zo * pow(Rc, 2.0) + *k4zo * pow(Rc, 4.0) + *k6zo * pow(Rc, 6.0));
+
+        if(fplog)
+        {
+            please_cite(fplog, "Fukuda2014");
+            fprintf(fplog, "%s:\n"
+                    "alpha = %g, rc = %g, d1 = %g, d2 = %g, d3 = %g, k2zo = %g, k4zo = %g, k6zo = %g, uzo(Rc) = %g\n",
+                    eel_names[eel], alpha, Rc, d1, d2, d3, *k2zo, *k4zo, *k6zo, *czo);
+        }
+    }
+    else
+    {
+        gmx_fatal(FARGS, "calc_zofac is called but eel is not ZO");
+    }
+}
+
+
 void init_generalized_rf(FILE *fplog,
                          const gmx_mtop_t *mtop, const t_inputrec *ir,
                          t_forcerec *fr)

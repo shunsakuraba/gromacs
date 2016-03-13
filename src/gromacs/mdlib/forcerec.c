@@ -2112,6 +2112,7 @@ init_interaction_const(FILE                       *fp,
         ic->zd_alpha   = fr->zd_alpha;
         ic->k_zq_2     = fr->k_zq_2;
         ic->k_zq_4     = fr->k_zq_4;
+        ic->k_zq_6     = fr->k_zq_6;
         ic->c_zq       = fr->c_zq;
     }
     else
@@ -2868,6 +2869,7 @@ void init_forcerec(FILE              *fp,
     fr->epsilon_r       = ir->epsilon_r;
     fr->epsilon_rf      = ir->epsilon_rf;
     fr->zd_alpha        = ir->zd_alpha;
+    fr->zm_degree       = ir->zm_degree;
     fr->fudgeQQ         = mtop->ffparams.fudgeQQ;
 
     /* Parameters for generalized RF */
@@ -3047,8 +3049,17 @@ void init_forcerec(FILE              *fp,
 
     if (fr->eeltype == eelZQ)
     {
-        calc_zqfac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
-                   &fr->k_zq_2, &fr->k_zq_4, &fr->c_zq);
+        if(fr->zm_degree == 2)
+        {
+            calc_zqfac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
+                       &fr->k_zq_2, &fr->k_zq_4, &fr->c_zq);
+            fr->k_zq_6 = 0;
+        }
+        else if(fr->zm_degree == 3) 
+        {
+            calc_zofac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
+                       &fr->k_zq_2, &fr->k_zq_4, &fr->k_zq_6, &fr->c_zq);
+        }
     }
 
     /*This now calculates sum for q and c6*/

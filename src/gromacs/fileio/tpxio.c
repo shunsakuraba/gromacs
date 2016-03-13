@@ -1068,6 +1068,7 @@ static void do_inputrec(t_fileio *fio, t_inputrec *ir, gmx_bool bRead,
         }
     }
     gmx_fio_do_real(fio, ir->zd_alpha);
+    gmx_fio_do_int(fio, ir->zm_degree);
     if (file_version >= 29)
     {
         gmx_fio_do_real(fio, ir->tabext);

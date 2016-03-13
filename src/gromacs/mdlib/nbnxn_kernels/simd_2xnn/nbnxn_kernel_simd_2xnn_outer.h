@@ -125,9 +125,9 @@
 #endif
 
 #if defined CALC_COUL_ZQ || defined CALC_COUL_ZMNZ
-    gmx_simd_real_t      mzq_3_S, mzq_5_S;
+    gmx_simd_real_t      mzq_3_S, mzq_5_S, mzq_7_S;
 #ifdef CALC_ENERGIES
-    gmx_simd_real_t      hzq_3_S, hzq_5_S, moh_zq_S;
+    gmx_simd_real_t      hzq_3_S, hzq_5_S, hzq_7_S, moh_zq_S;
 #endif
 #endif
 
@@ -282,9 +282,11 @@
 #if defined CALC_COUL_ZQ || defined CALC_COUL_ZMNZ
     mzq_3_S = gmx_simd_set1_r(-2*ic->k_zq_2);
     mzq_5_S = gmx_simd_set1_r(-4*ic->k_zq_4);
+    mzq_7_S = gmx_simd_set1_r(-6*ic->k_zq_6);
 #ifdef CALC_ENERGIES
     hzq_3_S = gmx_simd_set1_r(ic->k_zq_2);
     hzq_5_S = gmx_simd_set1_r(ic->k_zq_4);
+    hzq_7_S = gmx_simd_set1_r(ic->k_zq_6);
     moh_zq_S = gmx_simd_set1_r(-ic->c_zq);
 #endif
 #endif

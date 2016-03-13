@@ -215,6 +215,7 @@ double v_q_zq_lr(double beta, double r, double rc)
       return gmx_erfd(beta*r) / r - k2 * pow2(r) - k4 * pow4(r) + c;
     }
 }
+/* FIXME TODO: ZO */
 
 void table_spline3_fill_ewald_lr(real                                 *table_f,
                                  real                                 *table_v,

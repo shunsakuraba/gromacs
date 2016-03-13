@@ -110,8 +110,8 @@ typedef struct {
     real zd_alpha;
     real zd_b, zd_c;
 
-    /* Constants for zero-quadrupole */
-    real k_zq_2, k_zq_4;
+    /* Constants for zero-quadrupole / zero-octopole */
+    real k_zq_2, k_zq_4, k_zq_6;
     real c_zq;
 
     /* Force/energy interpolation tables, linear in force, quadratic in V */

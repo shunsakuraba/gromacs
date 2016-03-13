@@ -82,6 +82,11 @@ void calc_zqfac(FILE *fplog, int eel,
                 real *k2rf, real *k4rf, real *crf);
 /* Determine the zero-quadrupole summation constants */
 
+void calc_zofac(FILE *fplog, int eel, 
+                real Rc, real alpha,
+                real *k2zo, real *k4zo, real *k6zo, real *czo);
+/* Determine the zero-octopole summation constants */
+
 void init_generalized_rf(FILE *fplog,
                          const gmx_mtop_t *mtop, const t_inputrec *ir,
                          t_forcerec *fr);
