@@ -156,7 +156,7 @@ struct cu_nbparam
     float           two_k_rf;         /**< Reaction-field electrostatics constant            */
     float           c_zq;             /**< Zero-Quadrupole electrostatics constant           */
     float           two_k2_zq;        /**< Zero-Quadrupole electrostatics constant           */
-    float           four_k3_zq;       /**< Zero-Quadrupole electrostatics constant           */
+    float           four_k4_zq;       /**< Zero-Quadrupole electrostatics constant           */
     float           ewald_beta;       /**< Ewald/PME parameter                               */
     float           sh_ewald;         /**< Ewald/PME correction term substracted from the direct-space potential */
     float           sh_lj_ewald;      /**< LJ-Ewald/PME correction term added to the correction potential        */
