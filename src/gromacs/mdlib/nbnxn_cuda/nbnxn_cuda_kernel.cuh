@@ -487,7 +487,7 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
                                 E_el    += qi * qj_f * (int_bit*inv_r + r2 * (0.5f * two_k2_zq + 0.25f * four_k4_zq * r2) - c_zq);
 #endif
 #ifdef EL_ZMNZ
-                                E_el    += qi * qj_f * (inv_r * (int_bit - erff(r2 * inv_r * beta)) + 0.5f * two_k2_zq * r2 + 0.25f * four_k4_zq - c_zq);
+                                E_el    += qi * qj_f * (inv_r * (int_bit - erff(r2 * inv_r * beta)) + r2 * (0.5f * two_k2_zq + 0.25f * four_k4_zq * r2) - c_zq);
 #endif
 #ifdef EL_EWALD_ANY
                                 /* 1.0f - erff is faster than erfcf */
