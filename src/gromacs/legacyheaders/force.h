@@ -77,7 +77,7 @@ void calc_rffac(FILE *fplog, int eel, real eps_r, real eps_rf,
                 real *kappa, real *krf, real *crf);
 /* Determine the reaction-field constants */
 
-void calc_zqfac(FILE *fplog, int eel, 
+void calc_zmmfac(FILE *fplog, int eel, 
                 real Rc, real alpha,
                 real *k2rf, real *k4rf, real *crf);
 /* Determine the zero-quadrupole summation constants */
@@ -88,7 +88,7 @@ void init_generalized_rf(FILE *fplog,
 /* Initialize the generalized reaction field parameters */
 
 /* In zd_util.c */
-void calc_zdfac(FILE *fplog, int eel, real zd_alpha, real Rc,
+void calc_zdfac(FILE *fplog, int eel, real zmm_alpha, real Rc,
                 real *b, real *c);
 
 /* In wall.c */

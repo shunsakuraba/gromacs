@@ -970,18 +970,18 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
         }
         d2_el      = elfac*(2*pow(ir->rcoulomb, -3.0) + 2*k_rf);
     }
-    else if (ir->coulombtype == eelZQ)
+    else if (ir->coulombtype == eelZMM)
     {
         real k2zq, k4zq, czq, expma2r2;
-        calc_zqfac(NULL, ir->coulombtype, ir->zd_alpha, ir->rcoulomb, &k2zq, &k4zq, &czq);
+        calc_zmmfac(NULL, ir->coulombtype, ir->zmm_alpha, ir->rcoulomb, &k2zq, &k4zq, &czq);
         /* The first and second derivative of the energy function at Rc are both 0 in ZQ. */
         md1_el = 0.0;
         d2_el = 0.0;
-        expma2r2 = exp(- ir->zd_alpha * ir->zd_alpha * ir->rcoulomb * ir->rcoulomb);
-        md3_el = elfac * (6 * gmx_erfc(ir->zd_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -4.0)
-                          + expma2r2 / sqrt(M_PI) * (8.0 * pow(ir->zd_alpha, 5.0) * ir->rcoulomb
-                                                    + 8.0 * pow(ir->zd_alpha, 3.0) * pow(ir->rcoulomb, -1.0)
-                                                    + 12.0 * ir->zd_alpha * pow(ir->rcoulomb, -3.0)) 
+        expma2r2 = exp(- ir->zmm_alpha * ir->zmm_alpha * ir->rcoulomb * ir->rcoulomb);
+        md3_el = elfac * (6 * gmx_erfc(ir->zmm_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -4.0)
+                          + expma2r2 / sqrt(M_PI) * (8.0 * pow(ir->zmm_alpha, 5.0) * ir->rcoulomb
+                                                    + 8.0 * pow(ir->zmm_alpha, 3.0) * pow(ir->rcoulomb, -1.0)
+                                                    + 12.0 * ir->zmm_alpha * pow(ir->rcoulomb, -3.0)) 
                           - 24 * k4zq * ir->rcoulomb);
     }
     else if (EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD)

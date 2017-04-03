@@ -1936,9 +1936,9 @@ static void init_zm_f_table(interaction_const_t *ic,
     snew_aligned(ic->tabq_coul_FDV0, ic->tabq_size*4, 32);
     snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
     snew_aligned(ic->tabq_coul_V, ic->tabq_size, 32);
-    assert(ic->eeltype == eelZD || ic->eeltype == eelZQ);
+    assert(ic->eeltype == eelZD || ic->eeltype == eelZMM);
     table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
-                                ic->tabq_size, 1/ic->tabq_scale, ic->zd_alpha, ic->rcoulomb,
+                                ic->tabq_size, 1/ic->tabq_scale, ic->zmm_alpha, ic->rcoulomb,
                                 (ic->eeltype == eelZD ? v_q_zd_lr : v_q_zq_lr));
 }
 
@@ -1959,7 +1959,7 @@ void init_interaction_const_tables(FILE                *fp,
                     1/ic->tabq_scale, ic->tabq_size);
         }
     }
-    else if (ic->eeltype == eelZD || (ic->eeltype == eelZQ && ic->zd_alpha > 0.0))
+    else if (ic->eeltype == eelZD || (ic->eeltype == eelZMM && ic->zmm_alpha > 0.0))
     {
       init_zm_f_table(ic, rtab);
       if (fp != NULL)
@@ -2085,7 +2085,7 @@ init_interaction_const(FILE                       *fp,
     ic->epsfac           = fr->epsfac;
     ic->ewaldcoeff_q     = fr->ewaldcoeff_q;
 
-    if (fr->coulomb_modifier == eintmodPOTSHIFT && ic->eeltype != eelZD && ic->eeltype != eelZQ)
+    if (fr->coulomb_modifier == eintmodPOTSHIFT && ic->eeltype != eelZD && ic->eeltype != eelZMM)
     {
         ic->sh_ewald = gmx_erfc(ic->ewaldcoeff_q*ic->rcoulomb);
     }
@@ -2103,16 +2103,16 @@ init_interaction_const(FILE                       *fp,
     }
     else if (ic->eeltype == eelZD)
     {
-        ic->zd_alpha   = fr->zd_alpha;
+        ic->zmm_alpha   = fr->zmm_alpha;
         ic->zd_b       = fr->zd_b;
         ic->zd_c       = fr->zd_c;
     }
-    else if (ic->eeltype == eelZQ)
+    else if (ic->eeltype == eelZMM)
     {
-        ic->zd_alpha   = fr->zd_alpha;
-        ic->k_zq_2     = fr->k_zq_2;
-        ic->k_zq_4     = fr->k_zq_4;
-        ic->c_zq       = fr->c_zq;
+        ic->zmm_alpha   = fr->zmm_alpha;
+        ic->k_zmm_2     = fr->k_zmm_2;
+        ic->k_zmm_4     = fr->k_zmm_4;
+        ic->c_zmm       = fr->c_zmm;
     }
     else
     {
@@ -2658,7 +2658,7 @@ void init_forcerec(FILE              *fp,
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_REACTIONFIELD;
             break;
 
-        case eelZQ:
+        case eelZMM:
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE;
             break;
 
@@ -2809,7 +2809,7 @@ void init_forcerec(FILE              *fp,
             gmx_fatal(FARGS, "Cut-off scheme %S only supports LJ repulsion power 12", ecutscheme_names[ir->cutoff_scheme]);
         }
         fr->bvdwtab  = FALSE;
-        fr->bcoultab = (fr->eeltype == eelZD || (fr->eeltype == eelZQ && fr->zd_alpha > 0.0));
+        fr->bcoultab = (fr->eeltype == eelZD || (fr->eeltype == eelZMM && fr->zmm_alpha > 0.0));
     }
 
     /* Tables are used for direct ewald sum */
@@ -2867,7 +2867,7 @@ void init_forcerec(FILE              *fp,
     /* Electrostatics */
     fr->epsilon_r       = ir->epsilon_r;
     fr->epsilon_rf      = ir->epsilon_rf;
-    fr->zd_alpha        = ir->zd_alpha;
+    fr->zmm_alpha        = ir->zmm_alpha;
     fr->fudgeQQ         = mtop->ffparams.fudgeQQ;
 
     /* Parameters for generalized RF */
@@ -3041,14 +3041,14 @@ void init_forcerec(FILE              *fp,
     /* Zero-dipole summation constants */
     if (fr->eeltype == eelZD)
     {
-      calc_zdfac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
+      calc_zdfac(fp, fr->eeltype, fr->zmm_alpha, fr->rcoulomb,
                 &fr->zd_b, &fr->zd_c);
     }
 
-    if (fr->eeltype == eelZQ)
+    if (fr->eeltype == eelZMM)
     {
-        calc_zqfac(fp, fr->eeltype, fr->zd_alpha, fr->rcoulomb,
-                   &fr->k_zq_2, &fr->k_zq_4, &fr->c_zq);
+        calc_zmmfac(fp, fr->eeltype, fr->zmm_alpha, fr->rcoulomb,
+                   &fr->k_zmm_2, &fr->k_zmm_4, &fr->c_zmm);
     }
 
     /*This now calculates sum for q and c6*/

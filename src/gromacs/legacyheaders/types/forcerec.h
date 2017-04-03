@@ -243,10 +243,10 @@ typedef struct {
     real kappa, k_rf, c_rf;
 
     /* Constants for Zero-dupole summation */
-    real zd_alpha, zd_b, zd_c;
+    real zmm_alpha, zd_b, zd_c;
 
     /* Constants for zero-quadrupole method */
-    real k_zq_2, k_zq_4, c_zq;
+    real k_zmm_2, k_zmm_4, c_zmm;
 
     /* Charge sum and dipole for topology A/B ([0]/[1]) for Ewald corrections */
     double qsum[2];

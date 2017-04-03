@@ -933,7 +933,7 @@ void pr_inputrec(FILE *fp, int indent, const char *title, t_inputrec *ir,
         {
             PS("epsilon-rf", infbuf);
         }
-        PR("zd-alpha", ir->zd_alpha);
+        PR("zmm-alpha", ir->zmm_alpha);
         PS("vdw-type", EVDWTYPE(ir->vdwtype));
         PS("vdw-modifier", INTMODIFIER(ir->vdw_modifier));
         PR("rvdw-switch", ir->rvdw_switch);

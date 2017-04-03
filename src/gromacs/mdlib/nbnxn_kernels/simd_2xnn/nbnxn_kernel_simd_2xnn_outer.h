@@ -280,12 +280,12 @@
 #endif
 #endif
 #if defined CALC_COUL_ZQ || defined CALC_COUL_ZMNZ
-    mzq_3_S = gmx_simd_set1_r(-2*ic->k_zq_2);
-    mzq_5_S = gmx_simd_set1_r(-4*ic->k_zq_4);
+    mzq_3_S = gmx_simd_set1_r(-2*ic->k_zmm_2);
+    mzq_5_S = gmx_simd_set1_r(-4*ic->k_zmm_4);
 #ifdef CALC_ENERGIES
-    hzq_3_S = gmx_simd_set1_r(ic->k_zq_2);
-    hzq_5_S = gmx_simd_set1_r(ic->k_zq_4);
-    moh_zq_S = gmx_simd_set1_r(-ic->c_zq);
+    hzq_3_S = gmx_simd_set1_r(ic->k_zmm_2);
+    hzq_5_S = gmx_simd_set1_r(ic->k_zmm_4);
+    moh_zq_S = gmx_simd_set1_r(-ic->c_zmm);
 #endif
 #endif
 
@@ -317,7 +317,7 @@
 #endif
 
 #if defined CALC_COUL_ZMNZ && defined CALC_ENERGIES
-    czm_S = gmx_simd_set1_r(ic->c_zq);
+    czm_S = gmx_simd_set1_r(ic->c_zmm);
 #endif
 
     /* LJ function constants */
@@ -497,7 +497,7 @@
                 Vc_sub_self = 0.5*ic->c_rf;
 #endif
 #ifdef CALC_COUL_ZQ
-                Vc_sub_self = 0.5*ic->c_zq;
+                Vc_sub_self = 0.5*ic->c_zmm;
 #endif
 #ifdef CALC_COUL_TAB
 #ifdef TAB_FDV0
@@ -511,7 +511,7 @@
                 Vc_sub_self = 0.5*ic->ewaldcoeff_q*M_2_SQRTPI;
 #endif
 #ifdef CALC_COUL_ZMNZ
-                Vc_sub_self = 0.5 * (ic->c_zq + ic->zd_alpha * M_2_SQRTPI);
+                Vc_sub_self = 0.5 * (ic->c_zmm + ic->zmm_alpha * M_2_SQRTPI);
 #endif
 
                 for (ia = 0; ia < UNROLLI; ia++)

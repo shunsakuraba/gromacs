@@ -1067,7 +1067,7 @@ static void do_inputrec(t_fileio *fio, t_inputrec *ir, gmx_bool bRead,
             ir->epsilon_rf = 1.0;
         }
     }
-    gmx_fio_do_real(fio, ir->zd_alpha);
+    gmx_fio_do_real(fio, ir->zmm_alpha);
     if (file_version >= 29)
     {
         gmx_fio_do_real(fio, ir->tabext);

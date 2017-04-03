@@ -192,7 +192,7 @@ double v_q_zd_lr(double beta, double r, double rc)
 /* returns 1/r - v(r) */
 double v_q_zq_lr(double beta, double r, double rc)
 {
-    /* don't use calc_zqfac because this requires double precision */
+    /* don't use calc_zmmfac because this requires double precision */
     double arc = beta * rc;
     double d1 = 1. * pow(rc, -2.0) * (gmx_erfcd(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);
     double d2 = 2. * pow(rc, -3.0) * (gmx_erfcd(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + pow(arc, 3.0)));
@@ -1169,8 +1169,8 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
                 break;
             case etabZD:
                 if(r < rc) {
-                    Vtab  = gmx_erfc(fr->zd_alpha * r) / r - gmx_erfc(fr->zd_alpha * rc) / rc + fr->zd_b * (r * r - rc * rc);
-                    Ftab = gmx_erfc(fr->zd_alpha * r) / r2 + fr->zd_alpha * M_2_SQRTPI * exp(- fr->zd_alpha*fr->zd_alpha * r2) / r - 2 * fr->zd_b * r;
+                    Vtab  = gmx_erfc(fr->zmm_alpha * r) / r - gmx_erfc(fr->zmm_alpha * rc) / rc + fr->zd_b * (r * r - rc * rc);
+                    Ftab = gmx_erfc(fr->zmm_alpha * r) / r2 + fr->zmm_alpha * M_2_SQRTPI * exp(- fr->zmm_alpha*fr->zmm_alpha * r2) / r - 2 * fr->zd_b * r;
                 }
                 else
                 {
@@ -1184,8 +1184,8 @@ static void fill_table(t_tabledata *td, int tp, const t_forcerec *fr,
                 break;
             case etabZQ:
                 if(r < rc) {
-                    Vtab  = gmx_erfc(fr->zd_alpha * r) / r - gmx_erfc(fr->zd_alpha * rc) / rc + fr->k_zq_2 * (r * r - rc * rc) + fr->k_zq_4 * (pow(r, 4) - pow(rc, 4));
-                    Ftab = gmx_erfc(fr->zd_alpha * r) / r2 + fr->zd_alpha * M_2_SQRTPI * exp(- fr->zd_alpha*fr->zd_alpha * r2) / r - 2 * fr->k_zq_2 * r - 4 * fr->k_zq_4 * r * r * r;
+                    Vtab  = gmx_erfc(fr->zmm_alpha * r) / r - gmx_erfc(fr->zmm_alpha * rc) / rc + fr->k_zmm_2 * (r * r - rc * rc) + fr->k_zmm_4 * (pow(r, 4) - pow(rc, 4));
+                    Ftab = gmx_erfc(fr->zmm_alpha * r) / r2 + fr->zmm_alpha * M_2_SQRTPI * exp(- fr->zmm_alpha*fr->zmm_alpha * r2) / r - 2 * fr->k_zmm_2 * r - 4 * fr->k_zmm_4 * r * r * r;
                 }
                 else
                 {
@@ -1370,7 +1370,7 @@ static void set_table_type(int tabsel[], const t_forcerec *fr, gmx_bool b14only)
         case eelZD:
             tabsel[etiCOUL] = etabZD;
             break;
-        case eelZQ:
+        case eelZMM:
             tabsel[etiCOUL] = etabZQ;
             break;
         case eelSWITCH:

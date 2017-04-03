@@ -288,7 +288,7 @@ static void pp_verlet_load(gmx_mtop_t *mtop, t_inputrec *ir, matrix box,
     const real     nbnxn_refkernel_fac = 8.0;
 #endif
 
-    bQRF = (EEL_RF(ir->coulombtype) || ir->coulombtype == eelCUT || ir->coulombtype == eelZQ);
+    bQRF = (EEL_RF(ir->coulombtype) || ir->coulombtype == eelCUT || ir->coulombtype == eelZMM);
 
     iparams           = mtop->ffparams.iparams;
     atnr              = mtop->ffparams.atnr;

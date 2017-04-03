@@ -154,7 +154,7 @@ struct cu_nbparam
     float           epsfac;           /**< charge multiplication factor                      */
     float           c_rf;             /**< Reaction-field/plain cutoff electrostatics const. */
     float           two_k_rf;         /**< Reaction-field electrostatics constant            */
-    float           c_zq;             /**< Zero-Quadrupole electrostatics constant           */
+    float           c_zmm;             /**< Zero-Quadrupole electrostatics constant           */
     float           two_k2_zq;        /**< Zero-Quadrupole electrostatics constant           */
     float           four_k4_zq;       /**< Zero-Quadrupole electrostatics constant           */
     float           ewald_beta;       /**< Ewald/PME parameter                               */

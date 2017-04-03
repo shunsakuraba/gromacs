@@ -45,22 +45,22 @@
 #include "gromacs/legacyheaders/names.h"
 #include "gromacs/math/utilities.h"
 
-void calc_zdfac(FILE *fplog, int eel, real zd_alpha, real Rc,
+void calc_zdfac(FILE *fplog, int eel, real zmm_alpha, real Rc,
                 real *b, real *c)
 {
     /* Compute constants for zero-dipole method */
     real Rc2 = Rc * Rc;
     real Rc3 = Rc2 * Rc;
 
-    *b = gmx_erfc(zd_alpha * Rc) / (2 * Rc3) + 0.5 * zd_alpha * M_2_SQRTPI * exp(- zd_alpha * zd_alpha * Rc2) / Rc2;
-    *c = 1.5 * gmx_erfc(zd_alpha * Rc) / Rc + 0.5 * zd_alpha * M_2_SQRTPI * exp(- zd_alpha * zd_alpha * Rc2);
+    *b = gmx_erfc(zmm_alpha * Rc) / (2 * Rc3) + 0.5 * zmm_alpha * M_2_SQRTPI * exp(- zmm_alpha * zmm_alpha * Rc2) / Rc2;
+    *c = 1.5 * gmx_erfc(zmm_alpha * Rc) / Rc + 0.5 * zmm_alpha * M_2_SQRTPI * exp(- zmm_alpha * zmm_alpha * Rc2);
 
     if (fplog)
     {
         please_cite(fplog, "Fukuda2011");
         fprintf(fplog, "%s:\n"
                "rc    = %10g, alpha = %10g, b     = %10g, c     = %10g,\n",
-               eel_names[eel], Rc, zd_alpha, *b, *c);
+               eel_names[eel], Rc, zmm_alpha, *b, *c);
     }
 }
 

@@ -649,9 +649,9 @@ static void do_nb_verlet(t_forcerec *fr,
     {
         enr_nbnxn_kernel_ljc = eNR_NBNXN_LJ_RF;
     }
-    else if (ic->eeltype == eelZQ)
+    else if (ic->eeltype == eelZMM)
     {
-        if (ic->zd_alpha == 0.0)
+        if (ic->zmm_alpha == 0.0)
         {
             enr_nbnxn_kernel_ljc = eNR_NBNXN_LJ_ZQ;
         }

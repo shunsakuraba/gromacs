@@ -161,7 +161,7 @@ NBK_FUNC_NAME(_VgrpF)
 #ifdef CALC_COUL_ZQ
     real       k2_zq2, k4_zq4;
 #ifdef CALC_ENERGIES
-    real       k2_zq, k4_zq, c_zq;
+    real       k2_zq, k4_zq, c_zmm;
 #endif
 #endif
 #ifdef CALC_COUL_TAB
@@ -208,12 +208,12 @@ NBK_FUNC_NAME(_VgrpF)
 #endif
 #endif
 #ifdef CALC_COUL_ZQ
-    k2_zq2 = 2*ic->k_zq_2;
-    k4_zq4 = 4*ic->k_zq_4;
+    k2_zq2 = 2*ic->k_zmm_2;
+    k4_zq4 = 4*ic->k_zmm_4;
 #ifdef CALC_ENERGIES
-    k2_zq = ic->k_zq_2;
-    k4_zq = ic->k_zq_4;
-    c_zq = ic->c_zq;
+    k2_zq = ic->k_zmm_2;
+    k4_zq = ic->k_zmm_4;
+    c_zmm = ic->c_zmm;
 #endif
 #endif
 
@@ -314,7 +314,7 @@ NBK_FUNC_NAME(_VgrpF)
             Vc_sub_self = 0.5*c_rf;
 #endif
 #ifdef CALC_COUL_ZQ
-            Vc_sub_self = 0.5*c_zq;
+            Vc_sub_self = 0.5*c_zmm;
 #endif
 
 #ifdef CALC_COUL_TAB

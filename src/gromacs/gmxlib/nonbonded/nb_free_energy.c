@@ -156,9 +156,9 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     facel               = fr->epsfac;
     krf                 = fr->k_rf;
     crf                 = fr->c_rf;
-    kzq2                = fr->k_zq_2;
-    kzq4                = fr->k_zq_4;
-    czq                 = fr->c_zq;
+    kzq2                = fr->k_zmm_2;
+    kzq4                = fr->k_zmm_4;
+    czq                 = fr->c_zmm;
     ewc_lj              = fr->ewaldcoeff_lj;
     Vc                  = kernel_data->energygrp_elec;
     typeA               = mdatoms->typeA;
@@ -243,7 +243,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
         {
             icoul        = GMX_NBKERNEL_ELEC_EWALD;
         }
-        else if (ic->eeltype == eelZQ)
+        else if (ic->eeltype == eelZMM)
         {
             icoul        = GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE;
         }
@@ -257,7 +257,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     }
     else
     {
-        bExactElecCutoff = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || fr->eeltype == eelZD || fr->eeltype == eelZQ;
+        bExactElecCutoff = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || fr->eeltype == eelZD || fr->eeltype == eelZMM;
         bExactVdwCutoff  = (fr->vdw_modifier != eintmodNONE);
     }
 

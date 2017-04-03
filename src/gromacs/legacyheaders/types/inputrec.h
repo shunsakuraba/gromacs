@@ -387,7 +387,7 @@ typedef struct {
     real            rcoulomb;                /* Coulomb cutoff (nm)		                */
     real            epsilon_r;               /* relative dielectric constant                 */
     real            epsilon_rf;              /* relative dielectric constant of the RF       */
-    real            zd_alpha;                /* Dumping factor in zero-dipole method */
+    real            zmm_alpha;               /* Dumping factor in zero-dipole method */
     int             implicit_solvent;        /* No (=explicit water), or GBSA solvent models */
     int             gb_algorithm;            /* Algorithm to use for calculation Born radii  */
     int             nstgbradii;              /* Frequency of updating Generalized Born radii */
@@ -487,7 +487,7 @@ typedef struct {
 
 #define IR_ELEC_FIELD(ir) ((ir).ex[XX].n > 0 || (ir).ex[YY].n > 0 || (ir).ex[ZZ].n > 0)
 
-#define IR_EXCL_FORCES(ir) (EEL_FULL((ir).coulombtype) || (EEL_RF((ir).coulombtype) && (ir).coulombtype != eelRF_NEC) || (ir).coulombtype == eelZQ || (ir).implicit_solvent != eisNO)
+#define IR_EXCL_FORCES(ir) (EEL_FULL((ir).coulombtype) || (EEL_RF((ir).coulombtype) && (ir).coulombtype != eelRF_NEC) || (ir).coulombtype == eelZMM || (ir).implicit_solvent != eisNO)
 /* use pointer definitions of ir here, since that's what's usually used in the code */
 #define IR_NPT_TROTTER(ir) ((((ir)->eI == eiVV) || ((ir)->eI == eiVVAK)) && (((ir)->epc == epcMTTK) && ((ir)->etc == etcNOSEHOOVER)))
 

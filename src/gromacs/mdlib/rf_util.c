@@ -269,10 +269,10 @@ void calc_rffac(FILE *fplog, int eel, real eps_r, real eps_rf, real Rc, real Tem
     }
 }
 
-void calc_zqfac(FILE *fplog, int eel, real alpha, real Rc,
+void calc_zmmfac(FILE *fplog, int eel, real alpha, real Rc,
                 real *k2zq, real *k4zq, real *czq)
 {
-    if(eel == eelZQ)
+    if(eel == eelZMM)
     {
         real arc, d1, d2;
         arc = alpha * Rc;

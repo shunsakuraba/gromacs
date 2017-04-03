@@ -274,9 +274,9 @@ static void set_cutoff_parameters(cu_nbparam_t              *nbp,
     nbp->epsfac           = ic->epsfac;
     nbp->two_k_rf         = 2.0 * ic->k_rf;
     nbp->c_rf             = ic->c_rf;
-    nbp->two_k2_zq        = 2.0 * ic->k_zq_2;
-    nbp->four_k4_zq       = 4.0 * ic->k_zq_4;
-    nbp->c_zq             = ic->c_zq;
+    nbp->two_k2_zq        = 2.0 * ic->k_zmm_2;
+    nbp->four_k4_zq       = 4.0 * ic->k_zmm_4;
+    nbp->c_zmm             = ic->c_zmm;
     nbp->rvdw_sq          = ic->rvdw * ic->rvdw;
     nbp->rcoulomb_sq      = ic->rcoulomb * ic->rcoulomb;
     nbp->rlist_sq         = ic->rlist * ic->rlist;
@@ -348,7 +348,7 @@ static void init_nbparam(cu_nbparam_t              *nbp,
     {
         nbp->eeltype = eelCuRF;
     }
-    else if (ic->eeltype == eelZQ)
+    else if (ic->eeltype == eelZMM)
     {
         nbp->eeltype = eelCuZQ;
     }
