@@ -248,7 +248,7 @@ typedef struct {
 
     /* Constants for zero-quadrupole / octopole method */
     /* FIXME TODO: rename to k_zm_* throughout sources */
-    real k_zq_2, k_zq_4, k_zq_6, c_zq;
+    real k_zmm_2, k_zmm_4, k_zmm_6, c_zmm;
 
     /* Charge sum and dipole for topology A/B ([0]/[1]) for Ewald corrections */
     double qsum[2];

@@ -330,7 +330,7 @@ nbnxn_kernel_simd_2xnn(nbnxn_pairlist_set_t      gmx_unused *nbl_list,
     {
         coulkt = coulktRF;
     }
-    else if (ic->eeltype == eelZQ)
+    else if (ic->eeltype == eelZMM)
     {
         if (ic->zd_alpha == 0.0)
         {

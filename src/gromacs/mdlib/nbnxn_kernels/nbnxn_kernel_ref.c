@@ -215,7 +215,7 @@ nbnxn_kernel_ref(const nbnxn_pairlist_set_t *nbl_list,
     {
         coult = coultRF;
     }
-    else if(ic->eeltype == eelZQ && ic->zd_alpha == 0.0)
+    else if(ic->eeltype == eelZMM && ic->zd_alpha == 0.0)
     {
         coult = coultZQ;
     }

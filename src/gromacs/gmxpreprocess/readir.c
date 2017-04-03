@@ -360,7 +360,7 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
         if (!(ir->coulombtype == eelCUT ||
               (EEL_RF(ir->coulombtype) && ir->coulombtype != eelRF_NEC) ||
               EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD ||
-              ir->coulombtype == eelZD || ir->coulombtype == eelZQ))
+              ir->coulombtype == eelZD || ir->coulombtype == eelZMM))
         {
             warning_error(wi, "With Verlet lists only cut-off, reaction-field, zero-dipole, PME and Ewald electrostatics are supported");
         }
@@ -1109,7 +1109,7 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
            ir->coulombtype = eelRF_ZERO;
        }
     }
-    if (ir->coulombtype == eelZD || ir->coulombtype == eelZQ)
+    if (ir->coulombtype == eelZD || ir->coulombtype == eelZMM)
     {
         if(ir->zmm_alpha != 0 && ir->zmm_alpha <= 0.2) {
            /* It is very likely to cause a mistake that zd's alpha is confused to be (AA^-1) instead of (nm^-1).  */
@@ -1142,7 +1142,7 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
         }
 
     }
-    if (ir->coulombtype == eelZQ)
+    if (ir->coulombtype == eelZMM)
     {
         if (ir->cutoff_scheme != ecutsVERLET)
         {

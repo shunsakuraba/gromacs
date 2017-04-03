@@ -140,7 +140,7 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #elif defined EL_ZMNZ
     float  beta        = nbparam.ewald_beta;
 #elif defined EL_ZQ || defined EL_ZMNZ
-    float  c_zq        = nbparam.c_zq;
+    float  c_zmm        = nbparam.c_zmm;
 #else
     float  c_rf        = nbparam.c_rf;
 #endif /* EL_EWALD_ANY */
@@ -258,9 +258,9 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #if defined EL_RF || defined EL_CUTOFF
         E_el *= -nbparam.epsfac*0.5f*c_rf;
 #elif defined EL_ZQ
-        E_el *= -nbparam.epsfac*0.5f*c_zq;
+        E_el *= -nbparam.epsfac*0.5f*c_zmm;
 #elif defined EL_ZMNZ
-        E_el *= -nbparam.epsfac * (beta * M_FLOAT_1_SQRTPI + 0.5f * c_zq);
+        E_el *= -nbparam.epsfac * (beta * M_FLOAT_1_SQRTPI + 0.5f * c_zmm);
 #else
         E_el *= -nbparam.epsfac*beta*M_FLOAT_1_SQRTPI; /* last factor 1/sqrt(pi) */
 #endif
@@ -484,10 +484,10 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
                                 E_el    += qi * qj_f * (int_bit*inv_r + 0.5f * two_k_rf * r2 - c_rf);
 #endif
 #ifdef EL_ZQ
-                                E_el    += qi * qj_f * (int_bit*inv_r + r2 * (0.5f * two_k2_zq + 0.25f * four_k4_zq * r2) - c_zq);
+                                E_el    += qi * qj_f * (int_bit*inv_r + r2 * (0.5f * two_k2_zq + 0.25f * four_k4_zq * r2) - c_zmm);
 #endif
 #ifdef EL_ZMNZ
-                                E_el    += qi * qj_f * (inv_r * (int_bit - erff(r2 * inv_r * beta)) + r2 * (0.5f * two_k2_zq + 0.25f * four_k4_zq * r2) - c_zq);
+                                E_el    += qi * qj_f * (inv_r * (int_bit - erff(r2 * inv_r * beta)) + r2 * (0.5f * two_k2_zq + 0.25f * four_k4_zq * r2) - c_zmm);
 #endif
 #ifdef EL_EWALD_ANY
                                 /* 1.0f - erff is faster than erfcf */

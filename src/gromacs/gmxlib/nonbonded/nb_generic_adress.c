@@ -168,7 +168,7 @@ gmx_nb_generic_adress_kernel(t_nblist *                nlist,
         vdw_swV3 = vdw_swV4 = vdw_swV5 = vdw_swF2 = vdw_swF3 = vdw_swF4 = 0.0;
     }
 
-    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || fr->eeltype == eelZD || fr->eeltype==eelZQ;
+    bExactElecCutoff    = (fr->coulomb_modifier != eintmodNONE) || fr->eeltype == eelRF_ZERO || fr->eeltype == eelZD || fr->eeltype==eelZMM;
     bExactVdwCutoff     = (fr->vdw_modifier != eintmodNONE);
     bExactCutoff        = bExactElecCutoff || bExactVdwCutoff;
 
@@ -328,8 +328,8 @@ gmx_nb_generic_adress_kernel(t_nblist *                nlist,
 
                     case GMX_NBKERNEL_ELEC_ZEROQUADRUPOLE:
                         /* Zero-quadrupole */
-                        velec            = qq*(rinv + (fr->k_zq_2 + fr->k_zq_4 * rsq) * rsq - fr->c_zq);
-                        felec            = qq*(rinv * rinvsq - 2.0 * fr->k_zq_2 - 4.0 * fr->k_zq_4 * rsq);
+                        velec            = qq*(rinv + (fr->k_zmm_2 + fr->k_zmm_4 * rsq) * rsq - fr->c_zmm);
+                        felec            = qq*(rinv * rinvsq - 2.0 * fr->k_zmm_2 - 4.0 * fr->k_zmm_4 * rsq);
                         break;
 
                     case GMX_NBKERNEL_ELEC_CUBICSPLINETABLE:
