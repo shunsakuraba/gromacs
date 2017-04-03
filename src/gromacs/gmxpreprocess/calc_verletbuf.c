@@ -980,31 +980,31 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     else if (ir->coulombtype == eelZQ)
     {
         real k2zq, k4zq, k6zq, czq, expma2r2;
-        expma2r2 = exp(- ir->zd_alpha * ir->zd_alpha * ir->rcoulomb * ir->rcoulomb);
+        expma2r2 = exp(- ir->zmm_alpha * ir->zmm_alpha * ir->rcoulomb * ir->rcoulomb);
 
-        if(ir->zm_degree == 2)
+        if(ir->zmm_degree == 2)
         {
-            calc_zqfac(NULL, ir->coulombtype, ir->zd_alpha, ir->rcoulomb, &k2zq, &k4zq, &czq);
+            calc_zqfac(NULL, ir->coulombtype, ir->zmm_alpha, ir->rcoulomb, &k2zq, &k4zq, &czq);
             /* The first and second derivative of the energy function at Rc are both 0 in ZQ. */
             md1_el = 0.0;
             d2_el = 0.0;
-            md3_el = elfac * (6 * gmx_erfc(ir->zd_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -4.0)
-                              + expma2r2 / sqrt(M_PI) * (8.0 * pow(ir->zd_alpha, 5.0) * ir->rcoulomb
-                                                        + 8.0 * pow(ir->zd_alpha, 3.0) * pow(ir->rcoulomb, -1.0)
-                                                        + 12.0 * ir->zd_alpha * pow(ir->rcoulomb, -3.0)) 
+            md3_el = elfac * (6 * gmx_erfc(ir->zmm_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -4.0)
+                              + expma2r2 / sqrt(M_PI) * (8.0 * pow(ir->zmm_alpha, 5.0) * ir->rcoulomb
+                                                        + 8.0 * pow(ir->zmm_alpha, 3.0) * pow(ir->rcoulomb, -1.0)
+                                                        + 12.0 * ir->zmm_alpha * pow(ir->rcoulomb, -3.0)) 
                               - 24 * k4zq * ir->rcoulomb);
         }
-        else if(ir->zm_degree == 3)
+        else if(ir->zmm_degree == 3)
         {
-            calc_zofac(NULL, ir->coulombtype, ir->zd_alpha, ir->rcoulomb, &k2zq, &k4zq, &k6zq, &czq);
+            calc_zofac(NULL, ir->coulombtype, ir->zmm_alpha, ir->rcoulomb, &k2zq, &k4zq, &k6zq, &czq);
             md1_el = 0.0;
             d2_el = 0.0;
             md3_el = 0.0;
-            d4_el = elfac * (24 * gmx_erfc(ir->zd_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -5.0)
-                             + expma2r2 / sqrt(M_PI) * (16.0 * pow(ir->zd_alpha, 7.0) * pow(ir->rcoulomb, 2.0)
-                                                        + 8.0 * pow(ir->zd_alpha, 5.0)
-                                                        + 32.0 * pow(ir->zd_alpha, 3.0) * pow(ir->rcoulomb, -2.0)
-                                                        + 48.0 * ir->zd_alpha * pow(ir->rcoulomb, -4.0))
+            d4_el = elfac * (24 * gmx_erfc(ir->zmm_alpha * ir->rcoulomb) * pow(ir->rcoulomb, -5.0)
+                             + expma2r2 / sqrt(M_PI) * (16.0 * pow(ir->zmm_alpha, 7.0) * pow(ir->rcoulomb, 2.0)
+                                                        + 8.0 * pow(ir->zmm_alpha, 5.0)
+                                                        + 32.0 * pow(ir->zmm_alpha, 3.0) * pow(ir->rcoulomb, -2.0)
+                                                        + 48.0 * ir->zmm_alpha * pow(ir->rcoulomb, -4.0))
                              + 360 * k6zq * ir->rcoulomb * ir->rcoulomb
                              + 24 * k4zq);
         }

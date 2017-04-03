@@ -2868,8 +2868,8 @@ void init_forcerec(FILE              *fp,
     /* Electrostatics */
     fr->epsilon_r       = ir->epsilon_r;
     fr->epsilon_rf      = ir->epsilon_rf;
-    fr->zd_alpha        = ir->zd_alpha;
-    fr->zm_degree       = ir->zm_degree;
+    fr->zd_alpha        = ir->zmm_alpha;
+    fr->zm_degree       = ir->zmm_degree;
     fr->fudgeQQ         = mtop->ffparams.fudgeQQ;
 
     /* Parameters for generalized RF */

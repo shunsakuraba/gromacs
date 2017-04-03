@@ -1100,7 +1100,7 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
 
     if (ir->coulombtype == eelZD)
     {
-        if(ir->zd_alpha == 0) {
+        if(ir->zmm_alpha == 0) {
            /* if zero-dipole method is employed with alpha == 0, the interacting potential and the force are exactly equal to the reaction field with rf = infinity.
               Directly overwrite the method type with RF for fast implementation. */
            sprintf(warn_buf, "Zero-dipole method with alpha = 0 is equivalent to the reaction field method with epsilon = infinity. It will be processed as the reaction-field hereafter.");
@@ -1111,7 +1111,7 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
     }
     if (ir->coulombtype == eelZD || ir->coulombtype == eelZQ)
     {
-        if(ir->zd_alpha != 0 && ir->zd_alpha <= 0.2) {
+        if(ir->zmm_alpha != 0 && ir->zmm_alpha <= 0.2) {
            /* It is very likely to cause a mistake that zd's alpha is confused to be (AA^-1) instead of (nm^-1).  */
            sprintf(warn_buf, "Zero-multipole dumping coefficient is too small. The value is typically around 1.0 (nm^-1). Perhaps you used (AA^-1)?");
            warning(wi, warn_buf);
@@ -1985,9 +1985,9 @@ void get_ir(const char *mdparin, const char *mdparout,
     CTYPE ("Relative dielectric constant for the medium and the reaction field");
     RTYPE ("epsilon-r",   ir->epsilon_r,  1.0);
     RTYPE ("epsilon-rf",  ir->epsilon_rf, 0.0);
-    CTYPE ("Parameter for the zero-dipole summation electrostatic");
-    RTYPE ("zd-alpha",    ir->zd_alpha, 0.0);
-    ITYPE ("zm-degree",   ir->zm_degree, 2);
+    CTYPE ("Parameter for the zero-multipole summation electrostatic");
+    RTYPE ("zmm-alpha",   ir->zmm_alpha, 0.0);
+    ITYPE ("zmm-degree",  ir->zmm_degree, 2);
     CTYPE ("Method for doing Van der Waals");
     EETYPE("vdw-type",    ir->vdwtype,    evdw_names);
     EETYPE("vdw-modifier",    ir->vdw_modifier,    eintmod_names);
