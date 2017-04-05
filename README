@@ -1,3 +1,56 @@
+This is a patched version of GROMACS 5.0 that implements the Zero-quadrupole and the Zero-octupole summation methods[1]. 
+
+**Branches**
+
+zq-nonzeroalpha-50     Zero-quadrupole implementation on top of GROMACS 5.0
+zo-50                  Zero-octupole implementation on top of GROMACS 5.0
+
+**Installation**
+
+A typical installation procedure is as follows:
+
+git clone --branch zq-nonzeroalpha-50 https://github.com/shunsakuraba/gromacs.git
+cd gromacs
+mkdir build
+cd build
+# from now on, consult standard GROMACS installation procedure.
+# for example:
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/opt/gromacs-5.0.7-zeroquadrupole ..
+make -j8
+make install
+
+**Usage**
+Add following terms to the mdp and run grompp as an usual GROMACS run.
+
+* Zero-Quadrupole (alpha = 0)
+Coulombtype = Zero-multipole
+zmm_alpha = 0
+
+* Zero-Quadrupole (alpha != 0)
+Coulombtype = Zero-multipole
+zmm_alpha = 1.0 ; unit is nm^-1
+
+* Zero-Octupole
+Coulombtype = Zero-multipole
+zmm_degree = 3
+zmm_alpha = 0 ; alpha must be 0. alpha != 0 won't work
+
+
+**Note**
+Zero-octupole is not implemented in GPU.
+
+
+[1] Fukuda Ikuo, Narutoshi Kamiya, and Nakamura Haruki. The zero-multipole summation method for estimating electrostatic interactions in molecular dynamics: Analysis of the accuracy and application to liquid systems. Journal of Chemical Physics, 140, 2014, 194307.
+
+
+
+
+
+
+
+
+
+-- Original (GROMACS) README follows below.
 
                Welcome to the official version of GROMACS!
 
