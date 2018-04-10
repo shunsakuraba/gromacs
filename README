@@ -1,3 +1,5 @@
+   Implementation of the ZMM on GROMACS
+
 This is a patched version of GROMACS 5.0 that implements the Zero-quadrupole and the Zero-octupole summation methods[1]. 
 
 **Branches**
