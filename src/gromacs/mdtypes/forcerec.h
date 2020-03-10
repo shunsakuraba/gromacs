@@ -164,6 +164,10 @@ struct t_forcerec { // NOLINT (clang-analyzer-optin.performance.Padding)
     /* Parameters for generalized reaction field */
     real zsquare, temp;
 
+    /* Constants for zero-multipole methods */
+    int zmm_degree;
+    real zmm_alpha;
+
     /* Charge sum and dipole for topology A/B ([0]/[1]) for Ewald corrections */
     double qsum[2];
     double q2sum[2];

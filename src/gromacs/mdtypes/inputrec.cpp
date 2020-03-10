@@ -922,6 +922,10 @@ void pr_inputrec(FILE *fp, int indent, const char *title, const t_inputrec *ir,
         PR("ewald-geometry", ir->ewald_geometry);
         PR("epsilon-surface", ir->epsilon_surface);
 
+        /* Zero-multipole summation */
+        PI("zmm-degree", ir->zmm_degree);
+        PR("zmm-alpha", ir->zmm_alpha);
+
         /* Options for weak coupling algorithms */
         PS("tcoupl", ETCOUPLTYPE(ir->etc));
         PI("nsttcouple", ir->nsttcouple);

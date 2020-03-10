@@ -447,6 +447,10 @@ struct t_inputrec // NOLINT (clang-analyzer-optin.performance.Padding)
     real                        epsilon_r;
     //! Relative dielectric constant of the RF
     real                        epsilon_rf;
+    //! Zero multipole cancellation order of the ZMM
+    int                         zmm_degree;
+    //! ZMM dumping factor (nm^-1)
+    real                        zmm_alpha;
     //! Always false (no longer supported)
     bool                        implicit_solvent;
     //! Type of Van der Waals treatment

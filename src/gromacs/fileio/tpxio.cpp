@@ -90,7 +90,7 @@
  * merging with mainstream GROMACS, set this tag string back to
  * TPX_TAG_RELEASE, and instead add an element to tpxv.
  */
-static const char *tpx_tag = TPX_TAG_RELEASE;
+static const char *tpx_tag = "Zero-multipole";
 
 /*! \brief Enum of values that describe the contents of a tpr file
  * whose format matches a version number
@@ -1195,6 +1195,10 @@ static void do_inputrec(t_fileio *fio, t_inputrec *ir, gmx_bool bRead,
     gmx_fio_do_int(fio, ir->eDispCorr);
     gmx_fio_do_real(fio, ir->epsilon_r);
     gmx_fio_do_real(fio, ir->epsilon_rf);
+    if (true) { /* Zero-multipole only. Change here to merge */
+        gmx_fio_do_int(fio, ir->zmm_degree);
+        gmx_fio_do_real(fio, ir->zmm_alpha);
+    }
     gmx_fio_do_real(fio, ir->tabext);
 
     // This permits reading a .tpr file that used implicit solvent,

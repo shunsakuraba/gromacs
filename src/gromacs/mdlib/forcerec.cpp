@@ -81,6 +81,7 @@
 #include "gromacs/mdlib/ns.h"
 #include "gromacs/mdlib/qmmm.h"
 #include "gromacs/mdlib/rf_util.h"
+#include "gromacs/mdlib/zmm_util.h"
 #include "gromacs/mdlib/sim_util.h"
 #include "gromacs/mdlib/wall.h"
 #include "gromacs/mdtypes/commrec.h"
@@ -1910,7 +1911,15 @@ static void init_ewald_f_table(interaction_const_t *ic,
         snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
         snew_aligned(ic->tabq_coul_V, ic->tabq_size, 32);
         table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
-                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_q, v_q_ewald_lr);
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_q, ic, v_q_ewald_lr);
+    }
+    if (ic->eeltype == eelZMM)
+    {
+        snew_aligned(ic->tabq_coul_FDV0, ic->tabq_size*4, 32);
+        snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
+        snew_aligned(ic->tabq_coul_V, ic->tabq_size, 32);
+        table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->zmm_alpha, ic, v_q_zmm_lr);
     }
 
     if (EVDW_PME(ic->vdwtype))
@@ -1919,7 +1928,7 @@ static void init_ewald_f_table(interaction_const_t *ic,
         snew_aligned(ic->tabq_vdw_F, ic->tabq_size, 32);
         snew_aligned(ic->tabq_vdw_V, ic->tabq_size, 32);
         table_spline3_fill_ewald_lr(ic->tabq_vdw_F, ic->tabq_vdw_V, ic->tabq_vdw_FDV0,
-                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_lj, v_lj_ewald_lr);
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_lj, ic, v_lj_ewald_lr);
     }
 }
 
@@ -1934,6 +1943,16 @@ void init_interaction_const_tables(FILE                *fp,
         if (fp != nullptr)
         {
             fprintf(fp, "Initialized non-bonded Ewald correction tables, spacing: %.2e size: %d\n\n",
+                    1/ic->tabq_scale, ic->tabq_size);
+        }
+    }
+    if (ic->eeltype == eelZMM)
+    {
+        init_ewald_f_table(ic, rtab);
+
+        if (fp != NULL)
+        {
+            fprintf(fp, "Initialized non-bonded Zero-Multipole summation method tables, spacing: %.2e, size:%d\n",
                     1/ic->tabq_scale, ic->tabq_size);
         }
     }
@@ -2102,6 +2121,16 @@ init_interaction_const(FILE                       *fp,
     }
 
     initCoulombEwaldParameters(fp, ir, systemHasNetCharge, ic);
+
+    /* Zero-multipole method */
+    if (ic->eeltype == eelZMM)
+    {
+        ic->zmm_degree = ir->zmm_degree;
+        ic->zmm_alpha = ir->zmm_alpha;
+        calc_zmmfac(fp, ic->eeltype, ic->zmm_degree, ic->zmm_alpha,
+                    ic->rcoulomb,
+                    &ic->zmm_c2, &ic->zmm_c4, &ic->zmm_c6, &ic->zmm_c0);
+    }
 
     if (fp != nullptr)
     {
@@ -2585,7 +2614,7 @@ void init_forcerec(FILE                             *fp,
     {
         init_ewald_tab(&(fr->ewald_table), ir, fp);
     }
-
+    
     /* Electrostatics: Translate from interaction-setting-in-mdp-file to kernel interaction format */
     switch (ic->eeltype)
     {
@@ -2610,6 +2639,7 @@ void init_forcerec(FILE                             *fp,
         case eelPMESWITCH:
         case eelPMEUSER:
         case eelPMEUSERSWITCH:
+        case eelZMM:
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_CUBICSPLINETABLE;
             break;
 
@@ -2757,7 +2787,7 @@ void init_forcerec(FILE                             *fp,
     {
         init_generalized_rf(fp, mtop, ir, fr);
     }
-
+    
     fr->haveDirectVirialContributions =
         (EEL_FULL(ic->eeltype) || EVDW_PME(ic->vdwtype) ||
          fr->forceProviders->hasForceProvider() ||
@@ -2851,6 +2881,9 @@ void init_forcerec(FILE                             *fp,
     {
         gmx_fatal(FARGS, "Implict solvation is no longer supported.");
     }
+
+    /*This now calculates sum for q and c6*/
+    set_chargesum(fp, fr, mtop);
 
     /* Construct tables for the group scheme. A little unnecessary to
      * make both vdw and coul tables sometimes, but what the

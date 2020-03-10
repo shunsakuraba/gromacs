@@ -328,3 +328,4 @@ void init_generalized_rf(FILE *fplog,
     }
     fr->temp   = T/nrdf;
 }
+

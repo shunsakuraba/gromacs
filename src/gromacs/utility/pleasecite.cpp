@@ -387,6 +387,26 @@ void please_cite(FILE *fp, const char *key)
           "Accelerated weight histogram method for exploring free energy landscapes",
           "J. Chem. Phys.",
           141, 2014, "044110" },
+        { "Fukuda2011",
+          "I. Fukuda, Y. Yonezawa, H. Nakamura",
+          "Molecular dynamics scheme for precise estimation of electrostatic interaction via zero-dipole summation principle",
+          "J. Chem. Phys.",
+         134, 2011, "164107" },
+        { "Fukuda2014",
+          "I. Fukuda, K. Narutoshi, H. Nakamura",
+          "The zero-multipole summation method for estimating electrostatic interactions in molecular dynamics: Analysis of the accuracy and application to liquid systems",
+          "J. Chem. Phys.",
+          140, 2014, "194307" },
+        { "Sakuraba2018",
+          "S. Sakuraba, I. Fukuda",
+          "Performance evaluation of the zero‐multipole summation method in modern molecular dynamics software",
+          "J. Comput. Chem.",
+          39, 2018, "1551-1560" },
+        { "Wolf1999",
+          "D. Wolf, P. Keblinski, S. R. Phillpot, J. Eggebrecht",
+          "Exact method for the simulation of Coulombic systems by spherically truncated, pairwise r^-1 summation",
+          "J. Chem. Phys.",
+          110, 1999, "8254" }
     };
 #define NSTR static_cast<int>(asize(citedb))
 
