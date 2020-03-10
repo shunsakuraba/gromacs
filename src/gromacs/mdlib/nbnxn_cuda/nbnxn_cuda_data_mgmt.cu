@@ -300,6 +300,10 @@ static void set_cutoff_parameters(cu_nbparam_t              *nbp,
     nbp->epsfac           = ic->epsfac;
     nbp->two_k_rf         = 2.0 * ic->k_rf;
     nbp->c_rf             = ic->c_rf;
+    nbp->zmm_c0           = ic->zmm_c0;
+    nbp->zmm_2c2          = 2.0 * ic->zmm_c2;
+    nbp->zmm_4c4          = 4.0 * ic->zmm_c4;
+    nbp->zmm_6c6          = 6.0 * ic->zmm_c6;
     nbp->rvdw_sq          = ic->rvdw * ic->rvdw;
     nbp->rcoulomb_sq      = ic->rcoulomb * ic->rcoulomb;
     nbp->rlist_sq         = ic->rlist * ic->rlist;
@@ -435,6 +439,10 @@ static void init_nbparam(cu_nbparam_t              *nbp,
     {
         /* Initially rcoulomb == rvdw, so it's surely not twin cut-off. */
         nbp->eeltype = pick_ewald_kernel_type(false, dev_info);
+    }
+    else if (ic->eeltype == eelZMM && ic->zmm_alpha == 0.0)
+    {
+        nbp->eeltype = eelCuZMM;
     }
     else
     {
