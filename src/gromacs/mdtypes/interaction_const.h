@@ -108,6 +108,10 @@ typedef struct {
     real k_rf;
     real c_rf;
 
+    /* Constants for the zero-multipole methods */
+    int zmm_degree;
+    real zmm_alpha;
+
     /* Force/energy interpolation tables, linear in force, quadratic in V */
     real  tabq_scale;
     int   tabq_size;

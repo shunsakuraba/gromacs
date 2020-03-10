@@ -285,6 +285,17 @@ nbnxn_kernel_simd_4xn(nbnxn_pairlist_set_t      gmx_unused *nbl_list,
     {
         coulkt = coulktRF;
     }
+    else if (ic->eeltype == eelZMM)
+    {
+        if (ic->rcoulomb == ic->rvdw)
+        {
+            coulkt = coulktTAB;
+        }
+        else
+        {
+            coulkt = coulktTAB_TWIN;
+        }
+    }
     else
     {
         if (ewald_excl == ewaldexclTable)

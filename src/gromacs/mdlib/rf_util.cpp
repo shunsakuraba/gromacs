@@ -318,3 +318,107 @@ void init_generalized_rf(FILE *fplog,
     }
     fr->temp   = T/nrdf;
 }
+
+void calc_zmmfac_double(FILE *fplog, int eel, int zmm_degree, double zmm_alpha,
+                        double Rc,
+                        double *c2, double *c4, double *c6, double *c)
+{
+    /* Calculate the constants for Zero-multipole methods.
+     * epsfac q_i q_j (erf(alpha r)/r + c2 r^2 + c4 r^4 + c6 r^6 + c)
+     * note that the constant term c0 in paper and herein have a different sign.
+     */
+    if(eel == eelZMM)
+    {
+        real arc, d1, d2, d3;
+        arc = zmm_alpha * Rc;
+
+        switch(zmm_degree)
+        {
+        case 0:
+            /* Zero-monopole (Wolf) method */
+            *c = - std::erfc(arc) / Rc;
+            *c2 = 0;
+            *c4 = 0;
+            *c6 = 0;
+            if(fplog)
+            {
+                please_cite(fplog, "Wolf1999");
+                fprintf(fplog, "Wolf method:\n"
+                        "alpha = %g, rc = %g, u(Rc) = %g\n",
+                        zmm_alpha, Rc, *c);
+            }
+            break;
+        case 1:
+            /* Zero-dipole method */
+            d1 = 1. * pow(Rc, -2.0) * (std::erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);
+            *c2 = 1. / 2. * d1 * pow(Rc, -1.0);
+            *c =  - (std::erfc(arc) / Rc + *c2 * pow(Rc, 2.0));
+            *c4 = 0;
+            *c6 = 0;
+            if(fplog)
+            {
+                please_cite(fplog, "Fukuda2011");
+                fprintf(fplog, "%s (up to dipole):\n"
+                        "alpha = %g, rc = %g, d1 = %g, c2 = %g, u(Rc) = %g\n",
+                        eel_names[eel], zmm_alpha, Rc, d1, *c2, *c);
+            }
+            break;
+        case 2:
+            /* Zero-quadrupole method */
+            d1 = 1. * pow(Rc, -2.0) * (std::erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);
+            d2 = 2. * pow(Rc, -3.0) * (std::erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + pow(arc, 3.0)));
+
+            *c2 =   3. / 4. * d1 * pow(Rc, -1.0) + 1. / 4. * d2;
+            *c4 = - 1. / 8. * d1 * pow(Rc, -3.0) - 1. / 8. * d2 * pow(Rc, -2.0);
+            *c6 = 0.;
+
+            *c = - (std::erfc(arc) / Rc + *c2 * pow(Rc, 2.0) + *c4 * pow(Rc, 4.0));
+
+            if(fplog)
+            {
+                please_cite(fplog, "Fukuda2014");
+                please_cite(fplog, "Sakuraba2018");
+                fprintf(fplog, "%s (up to quadrupole):\n"
+                        "alpha = %g, rc = %g, d1 = %g, d2 = %g, c2 = %g, c4 = %g, u(Rc) = %g\n",
+                        eel_names[eel], zmm_alpha, Rc, d1, d2, *c2, *c4, *c);
+            }
+
+            break;
+        case 3:
+            /* Zero-octupole method */
+            d1 = 1. * pow(Rc, -2.0) * (std::erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * arc);
+            d2 = 2. * pow(Rc, -3.0) * (std::erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + pow(arc, 3.0)));
+            d3 = 6. * pow(Rc, -4.0) * (std::erfc(arc) + 2. / sqrt(M_PI) * exp(-arc * arc) * (arc + 2. / 3. * pow(arc, 3.0) + 2. / 3. * pow(arc, 5.0)));
+
+            *c2 =  15. / 16. * d1 * pow(Rc, -1.0) + 7. / 16. * d2 * pow(Rc,  0.0) + 1. / 16. * d3 * pow(Rc,  1.0);
+            *c4 = - 5. / 16. * d1 * pow(Rc, -3.0) - 5. / 16. * d2 * pow(Rc, -2.0) - 1. / 16. * d3 * pow(Rc, -1.0);
+            *c6 =   1. / 16. * d1 * pow(Rc, -5.0) + 1. / 16. * d2 * pow(Rc, -4.0) + 1. / 48. * d3 * pow(Rc, -3.0);
+            *c = - (std::erfc(arc) / Rc + *c2 * pow(Rc, 2.0) + *c4 * pow(Rc, 4.0) + *c6 * pow(Rc, 6.0));
+            if(fplog)
+            {
+                please_cite(fplog, "Fukuda2014");
+                please_cite(fplog, "Sakuraba2018");
+                fprintf(fplog, "%s (up to octupole):\n"
+                        "alpha = %g, rc = %g, d1 = %g, d2 = %g, d3 = %g, c2 = %g, c4 = %g, c6 = %g, u(Rc) = %g\n",
+                        eel_names[eel], zmm_alpha, Rc, d1, d2, d3, *c2, *c4, *c6, *c);
+            }
+            break;
+        default:
+            gmx_fatal(FARGS, "Zero-Multipole method is only supported with 0 <= degree <= 3");
+        }
+    }
+}
+
+void calc_zmmfac(FILE *fplog, int eel, int zmm_degree, real zmm_alpha,
+                 real Rc,
+                 real *c2, real *c4, real *c6, real *c)
+{
+    double c2d, c4d, c6d, cd;
+    calc_zmmfac_double(fplog, eel, zmm_degree, zmm_alpha,
+                       Rc,
+                       &c2d, &c4d, &c6d, &cd);
+    *c2 = (real)c2d;
+    *c4 = (real)c4d;
+    *c6 = (real)c6d;
+    *c = (real)cd;
+}

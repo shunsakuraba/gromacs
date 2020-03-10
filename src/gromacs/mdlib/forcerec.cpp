@@ -1908,7 +1908,15 @@ static void init_ewald_f_table(interaction_const_t *ic,
         snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
         snew_aligned(ic->tabq_coul_V, ic->tabq_size, 32);
         table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
-                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_q, v_q_ewald_lr);
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_q, ic, v_q_ewald_lr);
+    }
+    if (ic->eeltype == eelZMM)
+    {
+        snew_aligned(ic->tabq_coul_FDV0, ic->tabq_size*4, 32);
+        snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
+        snew_aligned(ic->tabq_coul_V, ic->tabq_size, 32);
+        table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->zmm_alpha, ic, v_q_zmm_lr);
     }
 
     if (EVDW_PME(ic->vdwtype))
@@ -1917,7 +1925,7 @@ static void init_ewald_f_table(interaction_const_t *ic,
         snew_aligned(ic->tabq_vdw_F, ic->tabq_size, 32);
         snew_aligned(ic->tabq_vdw_V, ic->tabq_size, 32);
         table_spline3_fill_ewald_lr(ic->tabq_vdw_F, ic->tabq_vdw_V, ic->tabq_vdw_FDV0,
-                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_lj, v_lj_ewald_lr);
+                                    ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_lj, ic, v_lj_ewald_lr);
     }
 }
 
@@ -1932,6 +1940,16 @@ void init_interaction_const_tables(FILE                *fp,
         if (fp != NULL)
         {
             fprintf(fp, "Initialized non-bonded Ewald correction tables, spacing: %.2e size: %d\n\n",
+                    1/ic->tabq_scale, ic->tabq_size);
+        }
+    }
+    if (ic->eeltype == eelZMM)
+    {
+        init_ewald_f_table(ic, rtab);
+
+        if (fp != NULL)
+        {
+            fprintf(fp, "Initialized non-bonded Zero-Multipole summation method tables, spacing: %.2e, size:%d\n",
                     1/ic->tabq_scale, ic->tabq_size);
         }
     }
@@ -2086,6 +2104,13 @@ init_interaction_const(FILE                       *fp,
         {
             ic->c_rf   = 0;
         }
+    }
+
+    /* Zero-multipole method */
+    if (ic->eeltype == eelZMM)
+    {
+        ic->zmm_degree = fr->zmm_degree;
+        ic->zmm_alpha = fr->zmm_alpha;
     }
 
     if (fp != NULL)
@@ -2615,6 +2640,7 @@ void init_forcerec(FILE              *fp,
         case eelPMESWITCH:
         case eelPMEUSER:
         case eelPMEUSERSWITCH:
+        case eelZMM:
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_CUBICSPLINETABLE;
             break;
 
@@ -2987,6 +3013,16 @@ void init_forcerec(FILE              *fp,
         calc_rffac(fp, fr->eeltype, fr->epsilon_r, fr->epsilon_rf,
                    fr->rcoulomb, fr->temp, fr->zsquare, box,
                    &fr->kappa, &fr->k_rf, &fr->c_rf);
+    }
+
+    /* Zero-multipole constants */
+    if (fr->eeltype == eelZMM)
+    {
+        fr->zmm_degree = ir->zmm_degree;
+        fr->zmm_alpha = ir->zmm_alpha;
+        calc_zmmfac(fp, fr->eeltype, ir->zmm_degree, fr->zmm_alpha,
+                    fr->rcoulomb,
+                    &fr->zmm_c2, &fr->zmm_c4, &fr->zmm_c6, &fr->zmm_c0);
     }
 
     /*This now calculates sum for q and c6*/

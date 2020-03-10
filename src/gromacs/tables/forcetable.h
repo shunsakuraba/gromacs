@@ -50,7 +50,7 @@ enum {
     etiCOUL, etiLJ6, etiLJ12, etiNR
 };
 
-typedef double (*real_space_grid_contribution_computer)(double, double);
+typedef double (*real_space_grid_contribution_computer)(double, double, const interaction_const_t *);
 /* Function pointer used to tell table_spline3_fill_ewald_lr whether it
  * should calculate the grid contribution for electrostatics or LJ.
  */
@@ -61,6 +61,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_F,
                                  int                                   ntab,
                                  double                                dx,
                                  real                                  beta,
+                                 const interaction_const_t            *ic,
                                  real_space_grid_contribution_computer v_lr);
 /* Fill tables of ntab points with spacing dr with the ewald long-range
  * (mesh) force.
@@ -73,11 +74,15 @@ void table_spline3_fill_ewald_lr(real                                 *table_F,
 real ewald_spline3_table_scale(const interaction_const_t *ic);
 /* Return the scaling for the Ewald quadratic spline tables. */
 
-double v_q_ewald_lr(double beta, double r);
+double v_q_ewald_lr(double beta, double r, const interaction_const_t *ic);
 /* Return the real space grid contribution for Ewald*/
 
-double v_lj_ewald_lr(double beta, double r);
+double v_lj_ewald_lr(double beta, double r, const interaction_const_t *ic);
 /* Return the real space grid contribution for LJ-Ewald*/
+
+double v_q_zmm_lr(double beta, double r, const interaction_const_t *ic);
+/* Return the real space grid contribution for ZMM */
+
 
 t_forcetable *make_tables(FILE *fp,
                           const t_forcerec *fr,

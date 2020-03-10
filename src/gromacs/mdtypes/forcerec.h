@@ -205,6 +205,10 @@ typedef struct t_forcerec {
     /* Constants for reaction fields */
     real kappa, k_rf, c_rf;
 
+    /* Constants for zero-multipole methods */
+    int zmm_degree;
+    real zmm_c0, zmm_c2, zmm_c4, zmm_c6, zmm_alpha;
+
     /* Charge sum and dipole for topology A/B ([0]/[1]) for Ewald corrections */
     double qsum[2];
     double q2sum[2];

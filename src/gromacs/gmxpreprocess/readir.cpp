@@ -356,9 +356,9 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
             warning_error(wi, "With Verlet lists only cut-off and PME LJ interactions are supported");
         }
         if (!(ir->coulombtype == eelCUT || EEL_RF(ir->coulombtype) ||
-              EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD))
+              EEL_PME(ir->coulombtype) || ir->coulombtype == eelEWALD || ir->coulombtype == eelZMM))
         {
-            warning_error(wi, "With Verlet lists only cut-off, reaction-field, PME and Ewald electrostatics are supported");
+            warning_error(wi, "With Verlet lists only cut-off, reaction-field, PME, Ewald, and zero-multipole electrostatics are supported");
         }
         if (!(ir->coulomb_modifier == eintmodNONE ||
               ir->coulomb_modifier == eintmodPOTSHIFT))
@@ -1096,6 +1096,47 @@ void check_ir(const char *mdparin, t_inputrec *ir, t_gromppopts *opts,
             warning(wi, warn_buf);
         }
     }
+
+    if(ir->coulombtype == eelZMM) {
+        /* zero-multipole method */
+        sprintf(err_buf, "With coulombtype = %s, zmm-degree < 0 does not make sense",
+                eel_names[ir->coulombtype]);
+        CHECK(ir->zmm_degree < 0);
+        sprintf(err_buf, "With coulombtype = %s, only zmm-degree <= 3 is supported",
+                eel_names[ir->coulombtype]);
+        CHECK(ir->zmm_degree > 3);
+        sprintf(err_buf, "With coulombtype = %s, zmm-alpha < 0 does not make sense",
+                eel_names[ir->coulombtype]);
+        CHECK(ir->zmm_alpha < 0.0);
+        sprintf(err_buf, "With coulombtype = %s, Only Verlet cutoff scheme can be used",
+                eel_names[ir->coulombtype]);
+        CHECK(ir->cutoff_scheme != ecutsVERLET);
+
+        if(ir->zmm_degree == 0 && ir->zmm_alpha == 0.0) {
+            sprintf(warn_buf, "Using zmm-degree == 0 and zmm_alpha == 0 means the abrupt cutoff, setting coulombtype = Cut-Off and coulomb-modifier = Potential-shift");
+            warning_note(wi, warn_buf);
+            ir->coulombtype = eelCUT;
+            ir->coulomb_modifier = eintmodPOTSHIFT;
+        }else if(ir->zmm_degree == 1 && ir->zmm_alpha == 0.0) {
+            sprintf(warn_buf, "Using zmm-degree == 1 and zmm_alpha == 0 is equivalent to reaction field, setting coulombtype = Reaction-field, epsilon-rf = 0 and coulomb-modifier = None");
+            warning_note(wi, warn_buf);
+            ir->coulombtype = eelRF;
+            ir->coulomb_modifier = eintmodNONE;
+            ir->epsilon_rf = 0.0;
+        }
+        if(ir->zmm_alpha != 0.0 && ir->zmm_alpha <= 0.2) {
+            /* It is very likely that ZMM's alpha is confused to be (AA^-1) instead of (nm^-1). */
+            sprintf(warn_buf, "Zero-multipole dumping coefficient is too small. The value is typically around 1.0 (nm^-1). Perhaps confused with (AA^-1)?");
+            warning(wi, warn_buf);
+        }
+
+        if(ir->coulomb_modifier != eintmodNONE && ir->coulomb_modifier != eintmodPOTSHIFT) {
+            sprintf(warn_buf, "With coulombtype = %s, only coulomb-modifier = None or Potential-shift makes sense (two modifiers are equivalent).",
+                    eel_names[ir->coulombtype]);
+            warning(wi, warn_buf);
+        }
+    }
+
     /* Allow rlist>rcoulomb for tabulated long range stuff. This just
      * means the interaction is zero outside rcoulomb, but it helps to
      * provide accurate energy conservation.
@@ -1928,6 +1969,9 @@ void get_ir(const char *mdparin, const char *mdparout,
     CTYPE ("Relative dielectric constant for the medium and the reaction field");
     RTYPE ("epsilon-r",   ir->epsilon_r,  1.0);
     RTYPE ("epsilon-rf",  ir->epsilon_rf, 0.0);
+    CTYPE ("Constants for the zero-multipole summation method");
+    ITYPE ("zmm-degree",  ir->zmm_degree, 2);
+    RTYPE ("zmm-alpha",   ir->zmm_alpha, 0.0);
     CTYPE ("Method for doing Van der Waals");
     EETYPE("vdw-type",    ir->vdwtype,    evdw_names);
     EETYPE("vdw-modifier",    ir->vdw_modifier,    eintmod_names);
