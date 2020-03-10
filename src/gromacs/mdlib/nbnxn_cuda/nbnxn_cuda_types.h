@@ -92,7 +92,7 @@ static const int c_clSize          = c_nbnxnGpuClusterSize;
  *  should match the order of enumerated types below.
  */
 enum eelCu {
-    eelCuCUT, eelCuRF, eelCuEWALD_TAB, eelCuEWALD_TAB_TWIN, eelCuEWALD_ANA, eelCuEWALD_ANA_TWIN, eelCuNR
+    eelCuCUT, eelCuRF, eelCuEWALD_TAB, eelCuEWALD_TAB_TWIN, eelCuEWALD_ANA, eelCuEWALD_ANA_TWIN, eelCuZMM, eelCuNR
 };
 
 /*! \brief VdW CUDA kernel flavors.
@@ -167,6 +167,7 @@ struct cu_nbparam
     float           epsfac;               /**< charge multiplication factor                      */
     float           c_rf;                 /**< Reaction-field/plain cutoff electrostatics const. */
     float           two_k_rf;             /**< Reaction-field electrostatics constant            */
+    float           zmm_c0, zmm_2c2, zmm_4c4, zmm_6c6; /**< Zero-multipole-summation electrostatic constants */
     float           ewald_beta;           /**< Ewald/PME parameter                               */
     float           sh_ewald;             /**< Ewald/PME correction term substracted from the direct-space potential */
     float           sh_lj_ewald;          /**< LJ-Ewald/PME correction term added to the correction potential        */

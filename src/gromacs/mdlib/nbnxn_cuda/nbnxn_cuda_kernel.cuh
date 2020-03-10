@@ -59,9 +59,9 @@
 #define EL_EWALD_ANY
 #endif
 
-#if defined EL_EWALD_ANY || defined EL_RF || defined LJ_EWALD || (defined EL_CUTOFF && defined CALC_ENERGIES)
+#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZMM || defined LJ_EWALD || (defined EL_CUTOFF && defined CALC_ENERGIES)
 /* Macro to control the calculation of exclusion forces in the kernel
- * We do that with Ewald (elec/vdw) and RF. Cut-off only has exclusion
+ * We do that with Ewald (elec/vdw), RF and ZMM. Cut-off only has exclusion
  * energy terms.
  *
  * Note: convenience macro, needs to be undef-ed at the end of the file.
@@ -192,6 +192,11 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #ifdef EL_RF
     float two_k_rf              = nbparam.two_k_rf;
 #endif
+#ifdef EL_ZMM
+    float zmm_2c2               = nbparam.zmm_2c2;
+    float zmm_4c4               = nbparam.zmm_4c4;
+    float zmm_6c6               = nbparam.zmm_6c6;
+#endif
 #ifdef EL_EWALD_ANA
     float beta2                 = nbparam.ewald_beta*nbparam.ewald_beta;
     float beta3                 = nbparam.ewald_beta*nbparam.ewald_beta*nbparam.ewald_beta;
@@ -204,8 +209,12 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #ifdef EL_EWALD_ANY
     float  beta        = nbparam.ewald_beta;
     float  ewald_shift = nbparam.sh_ewald;
-#else
+#elif defined EL_RF || defined EL_CUTOFF
     float  c_rf        = nbparam.c_rf;
+#elif defined EL_ZMM
+    float  zmm_c0      = nbparam.zmm_c0;
+#else
+#error "Unsupported EL type"
 #endif /* EL_EWALD_ANY */
     float *e_lj        = atdat.e_lj;
     float *e_el        = atdat.e_el;
@@ -327,13 +336,13 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
     E_lj = 0.0f;
     E_el = 0.0f;
 
-#ifdef EXCLUSION_FORCES /* Ewald or RF */
+#ifdef EXCLUSION_FORCES /* Ewald, RF or ZMM */
     if (nb_sci.shift == CENTRAL && pl_cj4[cij4_start].cj[0] == sci*c_numClPerSupercl)
     {
         /* we have the diagonal: add the charge and LJ self interaction energy term */
         for (i = 0; i < c_numClPerSupercl; i++)
         {
-#if defined EL_EWALD_ANY || defined EL_RF || defined EL_CUTOFF
+#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZMM || defined EL_CUTOFF
             qi    = xqib[i * c_clSize + tidxi].w;
             E_el += qi*qi;
 #endif
@@ -353,15 +362,17 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
         E_lj *= 0.5f*c_oneSixth*lje_coeff6_6;
 #endif
 
-#if defined EL_EWALD_ANY || defined EL_RF || defined EL_CUTOFF
+#if defined EL_EWALD_ANY || defined EL_RF || defined EL_ZMM || defined EL_CUTOFF
         /* Correct for epsfac^2 due to adding qi^2 */
         E_el /= nbparam.epsfac*c_clSize*NTHREAD_Z;
 #if defined EL_RF || defined EL_CUTOFF
         E_el *= -0.5f*c_rf;
+#elif defined EL_ZMM
+        E_el *= 0.5f * zmm_c0;
 #else
         E_el *= -beta*M_FLOAT_1_SQRTPI; /* last factor 1/sqrt(pi) */
 #endif
-#endif                                  /* EL_EWALD_ANY || defined EL_RF || defined EL_CUTOFF */
+#endif                                  /* EL_EWALD_ANY || defined EL_RF || defined EL_ZMM || defined EL_CUTOFF */
     }
 #endif                                  /* EXCLUSION_FORCES */
 
@@ -565,6 +576,9 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #ifdef EL_RF
                                 F_invr  += qi * qj_f * (int_bit*inv_r2 * inv_r - two_k_rf);
 #endif
+#ifdef EL_ZMM
+                                F_invr  += qi * qj_f * (int_bit*inv_r2 * inv_r - zmm_2c2 - r2 * (zmm_4c4 + zmm_6c6 * r2));
+#endif
 #if defined EL_EWALD_ANA
                                 F_invr  += qi * qj_f * (int_bit*inv_r2*inv_r + pmecorrF(beta2*r2)*beta3);
 #elif defined EL_EWALD_TAB
@@ -578,6 +592,9 @@ __global__ void NB_KERNEL_FUNC_NAME(nbnxn_kernel, _F_cuda)
 #endif
 #ifdef EL_RF
                                 E_el    += qi * qj_f * (int_bit*inv_r + 0.5f * two_k_rf * r2 - c_rf);
+#endif
+#ifdef EL_ZMM
+                                E_el    += qi * qj_f * (int_bit*inv_r + r2 * (0.5f * zmm_2c2 + r2 * (0.25f * zmm_4c4 + r2 * ((1.0f/6.0f) * zmm_6c6))) + zmm_c0);
 #endif
 #ifdef EL_EWALD_ANY
                                 /* 1.0f - erff is faster than erfcf */
