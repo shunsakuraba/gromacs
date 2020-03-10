@@ -92,6 +92,16 @@ void calc_rffac(FILE *fplog, int eel, real eps_r, real eps_rf,
                 real *krf, real *crf);
 /* Determine the reaction-field constants */
 
+void calc_zmmfac_double(FILE *fplog, int eel, int zmm_degree, double zmm_alpha,
+                        double Rc,
+                        double *c2, double *c4, double *c6, double *c);
+/* Calculate the zero-multipole electrostatic method constants (double precision version) */
+
+void calc_zmmfac(FILE *fplog, int eel, int zmm_degree, real zmm_alpha,
+                 real Rc,
+                 real *c2, real *c4, real *c6, real *c);
+/* Calculate the zero-multipole electrostatic method constants */
+
 void init_generalized_rf(FILE *fplog,
                          const gmx_mtop_t *mtop, const t_inputrec *ir,
                          t_forcerec *fr);

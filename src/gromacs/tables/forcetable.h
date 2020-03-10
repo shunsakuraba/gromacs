@@ -69,7 +69,7 @@ enum {
  * Used to tell table_spline3_fill_ewald_lr whether it
  * should calculate the grid contribution for electrostatics or LJ.
  */
-typedef double (*real_space_grid_contribution_computer)(double, double);
+typedef double (*real_space_grid_contribution_computer)(double, double, const interaction_const_t *);
 
 
 /*! \brief Fill tables with the Ewald long-range force interaction
@@ -95,6 +95,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_F,
                                  int                                   ntab,
                                  double                                dx,
                                  real                                  beta,
+                                 const interaction_const_t            *ic,
                                  real_space_grid_contribution_computer v_lr);
 
 /*! \brief Compute scaling for the Ewald quadratic spline tables.
@@ -110,7 +111,7 @@ real ewald_spline3_table_scale(const interaction_const_t *ic);
  *  \param r     Distance for which to calculate the real-space contrib
  *  \return      Real space grid contribution for Ewald electrostatics
  */
-double v_q_ewald_lr(double beta, double r);
+double v_q_ewald_lr(double beta, double r, const interaction_const_t *ic);
 
 /*! \brief Return the real space grid contribution for LJ-Ewald
  *
@@ -118,7 +119,16 @@ double v_q_ewald_lr(double beta, double r);
  *  \param r     Distance for which to calculate the real-space contrib
  *  \return      Real space grid contribution for Ewald Lennard-Jones interaction
  */
-double v_lj_ewald_lr(double beta, double r);
+double v_lj_ewald_lr(double beta, double r, const interaction_const_t *ic);
+
+/*! \brief Return the real space grid contribution for ZMM
+ *
+ *  \param beta  ZMM damping factor
+ *  \param r     Distance for which to calculate the ZMM interaction potential
+ *  \param ic    Interaction constants
+ *  \return      Real space grid contribution, i.e., 1/r - V(r)
+ */
+double v_q_zmm_lr(double beta, double r, const interaction_const_t *ic);
 
 /*! \brief Return tables for inner loops.
  *

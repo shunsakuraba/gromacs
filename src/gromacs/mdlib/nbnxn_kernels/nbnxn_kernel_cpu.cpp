@@ -149,6 +149,17 @@ nbnxn_kernel_cpu(nonbonded_verlet_group_t  *nbvg,
     {
         coulkt = coulktRF;
     }
+    else if(ic->eeltype == eelZMM)
+    {
+        if (ic->rcoulomb == ic->rvdw)
+        {
+            coulkt = coulktTAB;
+        }
+        else
+        {
+            coulkt = coulktTAB_TWIN;
+        }
+    }
     else
     {
         if (nbvg->ewald_excl == ewaldexclTable)

@@ -41,6 +41,7 @@
 #include <cmath>
 
 #include <algorithm>
+#include <cstdio>
 
 #include "gromacs/fileio/xvgr.h"
 #include "gromacs/math/functions.h"
@@ -54,6 +55,7 @@
 #include "gromacs/utility/fatalerror.h"
 #include "gromacs/utility/futil.h"
 #include "gromacs/utility/smalloc.h"
+#include "gromacs/mdlib/force.h"
 
 /* All the possible (implemented) table functions */
 enum {
@@ -64,6 +66,7 @@ enum {
     etabShift,
     etabRF,
     etabRF_ZERO,
+    etabZMM,
     etabCOUL,
     etabEwald,
     etabEwaldSwitch,
@@ -100,6 +103,7 @@ static const t_tab_props tprops[etabNR] = {
     { "Shift", TRUE },
     { "RF", TRUE },
     { "RF-zero", TRUE },
+    { "ZMM", TRUE },
     { "COUL", TRUE },
     { "Ewald", TRUE },
     { "Ewald-Switch", TRUE },
@@ -122,7 +126,7 @@ typedef struct {
     double *x, *v, *f;
 } t_tabledata;
 
-double v_q_ewald_lr(double beta, double r)
+double v_q_ewald_lr(double beta, double r, const interaction_const_t gmx_unused *ic)
 {
     if (r == 0)
     {
@@ -134,7 +138,7 @@ double v_q_ewald_lr(double beta, double r)
     }
 }
 
-double v_lj_ewald_lr(double beta, double r)
+double v_lj_ewald_lr(double beta, double r, const interaction_const_t gmx_unused *ic)
 {
     double br, br2, br4, r6, factor;
     if (r == 0)
@@ -152,12 +156,39 @@ double v_lj_ewald_lr(double beta, double r)
     }
 }
 
+double v_q_zmm_lr(double beta, double r, const interaction_const_t *ic)
+{
+    /* Because we need c2/c4/c6 in double precision, we do not use c0-c6 in interaction_const_t,
+       but passes rc / zmm_degree to recalculate. */
+    double c2, c4, c6, c0;
+    calc_zmmfac_double(nullptr, ic->eeltype, ic->zmm_degree, beta,
+                       ic->rcoulomb,
+                       &c2, &c4, &c6, &c0);
+
+    if(r == 0)
+    {
+        // see also Eq. 16(a) in JCP 140, 194307.
+        // 2(beta/sqrt(PI) + a_0^l/2) = beta * 2 / sqrt(M_PI) - c0.
+        return beta*2/sqrt(M_PI) - c0;
+    }
+    else if(r >= ic->rcoulomb)
+    {
+        return 1.0 / r;
+    }
+    else
+    {
+        // returns 1/r - V(r) = erf(alpha r)/r - c2 r**2 - c4 r**4 - c6 r**6 - c0.
+        return std::erf(beta*r)/r - c2 * std::pow(r, 2.) - c4 * std::pow(r, 4.) - c6 * std::pow(r, 6.) - c0;
+    }
+}
+
 void table_spline3_fill_ewald_lr(real                                 *table_f,
                                  real                                 *table_v,
                                  real                                 *table_fdv0,
                                  int                                   ntab,
                                  double                                dx,
                                  real                                  beta,
+                                 const interaction_const_t            *ic,
                                  real_space_grid_contribution_computer v_lr)
 {
     real     tab_max;
@@ -196,7 +227,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_f,
     {
         x_r0 = i*dx;
 
-        v_r0 = (*v_lr)(beta, x_r0);
+        v_r0 = (*v_lr)(beta, x_r0, ic);
 
         if (!bOutOfRange)
         {
@@ -222,7 +253,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_f,
         }
 
         /* Get the potential at table point i-1 */
-        v_r1 = (*v_lr)(beta, (i-1)*dx);
+        v_r1 = (*v_lr)(beta, (i-1)*dx, ic);
 
         if (v_r1 != v_r1 || v_r1 < -tab_max || v_r1 > tab_max)
         {
@@ -234,7 +265,7 @@ void table_spline3_fill_ewald_lr(real                                 *table_f,
             /* Calculate the average second derivative times dx over interval i-1 to i.
              * Using the function values at the end points and in the middle.
              */
-            a2dx = (v_r0 + v_r1 - 2*(*v_lr)(beta, x_r0-0.5*dx))/(0.25*dx);
+            a2dx = (v_r0 + v_r1 - 2*(*v_lr)(beta, x_r0-0.5*dx, ic))/(0.25*dx);
             /* Set the derivative of the spline to match the difference in potential
              * over the interval plus the average effect of the quadratic term.
              * This is the essential step for minimizing the error in the force.
@@ -356,6 +387,17 @@ real ewald_spline3_table_scale(const interaction_const_t *ic)
             fprintf(debug, "Ewald Coulomb quadratic spline table spacing: %f 1/nm\n", 1/sc_q);
         }
 
+        sc    = std::max(sc, sc_q);
+    }
+    else if(ic->eeltype == eelZMM)
+    {
+        real sc_q;
+        /* Old-style table spacing, as the third derivative depends on parameters */
+#if GMX_DOUBLE
+        sc_q  = 2000.0;
+#else
+        sc_q  = 500.0f;
+#endif
         sc    = std::max(sc, sc_q);
     }
 
@@ -899,7 +941,8 @@ static void fill_table(t_tabledata *td, int tp, const interaction_const_t *ic,
                 break;
             case etabRF:
             case etabRF_ZERO:
-                /* No need for preventing the usage of modifiers with RF */
+            case etabZMM:
+                /* No need for preventing the usage of modifiers with RF / ZMM */
                 Vcut  = 0.0;
                 break;
             case etabEXPMIN:
@@ -1055,6 +1098,29 @@ static void fill_table(t_tabledata *td, int tp, const interaction_const_t *ic,
                 {
                     Vtab = 0;
                     Ftab = 0;
+                }
+                break;
+            case etabZMM:
+                if(r >= rc) {
+                    Vtab = 0;
+                    Ftab = 0;
+                }
+                else
+                {
+                    real alpha = ic->zmm_alpha;
+                    real ra = alpha * r;
+                    real erfcar = std::erfc(ra);
+                    real r2 = r * r;
+                    // all necessary factors should already be calculated at this point
+                    Vtab = erfcar / r
+                        + r2 * (ic->zmm_c2 + r2 * (ic->zmm_c4 + r2 * ic->zmm_c6))
+                        + ic->zmm_c0;
+                    Ftab = erfcar / r2 + alpha * M_2_SQRTPI * exp(- alpha * alpha * r2) / r
+                        - r * (2 * ic->zmm_c2 + r2 * (4 * ic->zmm_c4 + r2 * 6 * ic->zmm_c6));
+                    if (debug)
+                    {
+                        fprintf(debug, "etabZMM at %g: V=%g, F=%g\n", r, Vtab, Ftab);
+                    }
                 }
                 break;
             case etabEXPMIN:
@@ -1221,6 +1287,9 @@ static void set_table_type(int tabsel[], const interaction_const_t *ic, gmx_bool
             break;
         case eelENCADSHIFT:
             tabsel[etiCOUL] = etabCOULEncad;
+            break;
+        case eelZMM:
+            tabsel[etiCOUL] = etabZMM;
             break;
         default:
             gmx_fatal(FARGS, "Invalid eeltype %d", eltype);

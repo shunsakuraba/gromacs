@@ -50,6 +50,7 @@
 #include "gromacs/mdlib/nb_verlet.h"
 #include "gromacs/mdlib/nbnxn_simd.h"
 #include "gromacs/mdlib/nbnxn_util.h"
+#include "gromacs/mdlib/force.h"
 #include "gromacs/mdtypes/inputrec.h"
 #include "gromacs/mdtypes/md_enums.h"
 #include "gromacs/topology/ifunc.h"
@@ -105,6 +106,7 @@ typedef struct
     real  md1; // -V' at the cutoff
     real  d2;  //  V'' at the cutoff
     real  md3; // -V''' at the cutoff
+    real  d4;
 } pot_derivatives_t;
 
 VerletbufListSetup verletbufGetListSetup(int nbnxnKernelType)
@@ -665,8 +667,10 @@ static real energyDriftAtomPair(bool isConstrained_i,
         der->d2/6*(s*(rsh2 + 2*s2)*c_exp - rsh*(rsh2 + 3*s2)*c_erfc);
     real pot3 = sc_fac*
         der->md3/24*((rsh2*rsh2 + 6*rsh2*s2 + 3*s2*s2)*c_erfc - rsh*s*(rsh2 + 5*s2)*c_exp);
+    real pot4 = sc_fac*
+        der->d4/120*(s * (8*s2*s2 + 9*rsh2*s2 + rsh2*rsh2)*c_exp - rsh*(15*s2*s2 + 10*rsh2*s2 + rsh2*rsh2)*c_erfc);
 
-    return pot1 + pot2 + pot3;
+    return pot1 + pot2 + pot3 + pot4;
 }
 
 static real energyDrift(const verletbuf_atomtype_t *att, int natt,
@@ -705,13 +709,15 @@ static real energyDrift(const verletbuf_atomtype_t *att, int natt,
             /* Add up the up to four independent variances */
             real s2 = s2i_2d + s2i_3d + s2j_2d + s2j_3d;
 
-            // Set -V', V'' and -V''' at the cut-off for LJ */
+            // Set -V', V'' and -V''' at the cut-off for LJ.
+            // V'''' is ignored due to too small contribution.
             real              c6  = ffp->iparams[prop_i->type*ffp->atnr + prop_j->type].lj.c6;
             real              c12 = ffp->iparams[prop_i->type*ffp->atnr + prop_j->type].lj.c12;
             pot_derivatives_t lj;
             lj.md1 = c6*ljDisp->md1 + c12*ljRep->md1;
             lj.d2  = c6*ljDisp->d2  + c12*ljRep->d2;
             lj.md3 = c6*ljDisp->md3 + c12*ljRep->md3;
+            lj.d4  = 0;
 
             real pot_lj = energyDriftAtomPair(prop_i->bConstr, prop_j->bConstr,
                                               s2, s2i_2d, s2j_2d,
@@ -722,7 +728,8 @@ static real energyDrift(const verletbuf_atomtype_t *att, int natt,
             pot_derivatives_t elec_qq;
             elec_qq.md1 = elec->md1*prop_i->q*prop_j->q;
             elec_qq.d2  = elec->d2 *prop_i->q*prop_j->q;
-            elec_qq.md3 = 0;
+            elec_qq.md3 = elec->md3*prop_i->q*prop_j->q;
+            elec_qq.d4  = elec->d4 *prop_i->q*prop_j->q;
 
             real pot_q  = energyDriftAtomPair(prop_i->bConstr, prop_j->bConstr,
                                               s2, s2i_2d, s2j_2d,
@@ -999,8 +1006,8 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
         fprintf(debug, "energy drift atom types: %d\n", natt);
     }
 
-    pot_derivatives_t ljDisp = { 0, 0, 0 };
-    pot_derivatives_t ljRep  = { 0, 0, 0 };
+    pot_derivatives_t ljDisp = { 0, 0, 0, 0 };
+    pot_derivatives_t ljRep  = { 0, 0, 0, 0 };
     real              repPow = mtop->ffparams.reppow;
 
     if (ir->vdwtype == evdwCUT)
@@ -1058,7 +1065,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
     elfac = ONE_4PI_EPS0/ir->epsilon_r;
 
     // Determine the 1st and 2nd derivative for the electostatics
-    pot_derivatives_t elec = { 0, 0, 0 };
+    pot_derivatives_t elec = { 0, 0, 0, 0 };
 
     if (ir->coulombtype == eelCUT || EEL_RF(ir->coulombtype))
     {
@@ -1099,9 +1106,78 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
         elec.md1 = elfac*(b*std::exp(-br*br)*M_2_SQRTPI/rc + std::erfc(br)/(rc*rc));
         elec.d2  = elfac/(rc*rc)*(2*b*(1 + br*br)*std::exp(-br*br)*M_2_SQRTPI + 2*std::erfc(br)/rc);
     }
+    else if (ir->coulombtype == eelZMM)
+    {
+        real c2, c4, c6, c, expma2r2;
+        real rc;
+        real alpha;
+        real ar;
+        alpha = ir->zmm_alpha;
+        rc = ir->rcoulomb;
+        ar = alpha * rc;
+        expma2r2 = std::exp(-ar*ar);
+        calc_zmmfac(NULL, ir->coulombtype, ir->zmm_degree, alpha, rc, &c2, &c4, &c6, &c);
+
+        elec.md1 = elfac *
+            (1 * std::erfc(ar) * pow(rc, -2)
+             + M_2_SQRTPI * expma2r2 * (  1.0 * pow(alpha, 1) * pow(rc, -1) )
+             - 2 * c2 * pow(rc, 1)
+             - 4 * c4 * pow(rc, 3)
+             - 6 * c6 * pow(rc, 5));
+        elec.d2 = elfac *
+            (2 * std::erfc(ar) * pow(rc, -3)
+             + M_2_SQRTPI * expma2r2 * (  2.0 * pow(alpha, 3) * pow(rc, 0)
+                                        + 2.0 * pow(alpha, 1) * pow(rc, -2))
+             + 2 * c2
+             + 12 * c4 * pow(rc, 2)
+             + 30 * c6 * pow(rc, 4));
+        elec.md3 = elfac *
+            (6 * std::erfc(ar) * pow(rc, -4)
+             + M_2_SQRTPI * expma2r2 * (  4.0 * pow(alpha, 5) * pow(rc,  1)
+                                        + 4.0 * pow(alpha, 3) * pow(rc, -1)
+                                        + 6.0 * pow(alpha, 1) * pow(rc, -3))
+             - 24 * c4 * pow(rc, 1)
+             - 120 * c6 * pow(rc, 3));
+        elec.d4 = elfac *
+            (24 * std::erfc(ar) * pow(rc, -5)
+             + M_2_SQRTPI * expma2r2 * (   8.0 * pow(alpha, 7) * pow(rc, 2)
+                                        +  4.0 * pow(alpha, 5) * pow(rc, 0)
+                                        + 16.0 * pow(alpha, 3) * pow(rc, -2)
+                                        + 24.0 * pow(alpha, 1) * pow(rc, -4))
+             + 24 * c4 * pow(rc, 0)
+             + 360 * c6 * pow(rc, 2));
+
+        switch(ir->zmm_degree) {
+        case 0:
+            /* Wolf method, nothing to check */
+            assert(std::abs(c2) < 1e-4 || !"C2 should be zero with Wolf method");
+            assert(std::abs(c4) < 1e-4 || !"C4 should be zero with Wolf method");
+            assert(std::abs(c6) < 1e-4 || !"C6 should be zero with Wolf method");
+            break;
+        case 1:
+            /* Zero-dipole */
+            assert(std::abs(elec.md1) < 1e-4 || !"V'(rc) should be zero with ZMM (l=1)");
+            assert(std::abs(c4) < 1e-4 || !"C4 should be zero with ZMM (l=1)");
+            assert(std::abs(c6) < 1e-4 || !"C6 should be zero with ZMM (l=1)");
+            break;
+        case 2:
+            /* The first and second derivative of the energy function at Rc are both 0 in ZQ.
+             */
+            assert(std::abs(elec.md1) < 1e-4 || !"V'(rc) should be zero with ZMM (l=2)");
+            assert(std::abs(elec.d2) < 1e-4 || !"V''(rc) should be zero with ZMM (l=2)");
+            assert(std::abs(c6) < 1e-4 || !"C6 should be zero with ZMM (l=2)");
+            break;
+        case 3:
+            /* Zero-octupole */
+            assert(std::abs(elec.md1) < 1e-4 || !"V'(rc) should be zero with ZMM (l=3)");
+            assert(std::abs(elec.d2) < 1e-4 || !"V''(rc) should be zero with ZMM (l=3)");
+            assert(std::abs(elec.md3) < 1e-4 || !"V'''(rc) should be zero with ZMM (l=3)");
+            break;
+        }
+    }
     else
     {
-        gmx_fatal(FARGS, "Energy drift calculation is only implemented for Reaction-Field and Ewald electrostatics");
+        gmx_fatal(FARGS, "Energy drift calculation is only implemented for Reaction-Field, Ewald, and Zero-multipole electrostatics");
     }
 
     /* Determine the variance of the atomic displacement
@@ -1117,7 +1193,7 @@ void calc_verlet_buffer_size(const gmx_mtop_t *mtop, real boxvol,
         fprintf(debug, "Derivatives of non-bonded potentials at the cut-off:\n");
         fprintf(debug, "LJ disp. -V' %9.2e V'' %9.2e -V''' %9.2e\n", ljDisp.md1, ljDisp.d2, ljDisp.md3);
         fprintf(debug, "LJ rep.  -V' %9.2e V'' %9.2e -V''' %9.2e\n", ljRep.md1, ljRep.d2, ljRep.md3);
-        fprintf(debug, "Electro. -V' %9.2e V'' %9.2e\n", elec.md1, elec.d2);
+        fprintf(debug, "Electro. -V' %9.2e V'' %9.2e -V''' %9.2e V'''' %9.2e\n", elec.md1, elec.d2, elec.md3, elec.d4);
         fprintf(debug, "sqrt(kT_fac) %f\n", std::sqrt(kT_fac));
     }
 
