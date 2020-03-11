@@ -81,7 +81,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     double        dvdl_coul, dvdl_vdw;
     real          lfac_coul[NSTATES], dlfac_coul[NSTATES], lfac_vdw[NSTATES], dlfac_vdw[NSTATES];
     real          sigma6[NSTATES], alpha_vdw_eff, alpha_coul_eff, sigma2_def, sigma2_min;
-    double        rp, rpm2, rC, rV, rinvC, rpinvC, rinvV, rpinvV; /* Needs double for sc_power==48 */
+    double        rp, rpm2, rC, rC2, rV, rinvC, rpinvC, rinvV, rpinvV; /* Needs double for sc_power==48 */
     real          sigma2[NSTATES], sigma_pow[NSTATES];
     int           do_tab, tab_elemsize = 0;
     int           n0, n1C, n1V, nnn;
@@ -103,6 +103,7 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     const real *  x;
     real *        f;
     real          facel, krf, crf;
+    real          zmm_c0, zmm_c2, zmm_c4, zmm_c6;
     const real *  chargeA;
     const real *  chargeB;
     real          sigma6_min, sigma6_def, lam_power, sc_r_power;
@@ -158,6 +159,10 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
     facel               = fr->epsfac;
     krf                 = fr->k_rf;
     crf                 = fr->c_rf;
+    zmm_c0              = fr->zmm_c0;
+    zmm_c2              = fr->zmm_c2;
+    zmm_c4              = fr->zmm_c4;
+    zmm_c6              = fr->zmm_c6;
     Vc                  = kernel_data->energygrp_elec;
     typeA               = mdatoms->typeA;
     typeB               = mdatoms->typeB;
@@ -239,6 +244,10 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
         else if (EEL_PME_EWALD(ic->eeltype))
         {
             icoul        = GMX_NBKERNEL_ELEC_EWALD;
+        }
+        else if (ic->eeltype == eelZMM && ic->zmm_alpha == 0.0)
+        {
+            icoul        = GMX_NBKERNEL_ELEC_ZMM;
         }
         else
         {
@@ -588,6 +597,13 @@ gmx_nb_free_energy_kernel(const t_nblist * gmx_restrict    nlist,
                                         Vcoul[i]  = qq[i]*(rinvcorr-(ewtab[ewitab+2]-ewtabhalfspace*eweps*(ewtab[ewitab]+FscalC[i])));
                                         FscalC[i] = qq[i]*(rinvC-rC*FscalC[i]);
                                     }
+                                    break;
+
+                                case GMX_NBKERNEL_ELEC_ZMM:
+                                    /* zero-multipole summation */
+                                    rC2 = rC * rC;
+                                    Vcoul[i]   = qq[i]*(rinvC + zmm_c0 + rC2 * (zmm_c2 + rC2 * (zmm_c4 + rC2 * zmm_c6)));
+                                    FscalC[i]  = qq[i]*(rinvC - rC2 * (2 * zmm_c2 + rC2 * (4 * zmm_c4 + rC2 * 6 * zmm_c6)));
                                     break;
 
                                 case GMX_NBKERNEL_ELEC_NONE:
