@@ -1910,7 +1910,7 @@ static void init_ewald_f_table(interaction_const_t *ic,
         table_spline3_fill_ewald_lr(ic->tabq_coul_F, ic->tabq_coul_V, ic->tabq_coul_FDV0,
                                     ic->tabq_size, 1/ic->tabq_scale, ic->ewaldcoeff_q, ic, v_q_ewald_lr);
     }
-    if (ic->eeltype == eelZMM)
+    if (ic->eeltype == eelZMM && ic->zmm_alpha != 0.0)
     {
         snew_aligned(ic->tabq_coul_FDV0, ic->tabq_size*4, 32);
         snew_aligned(ic->tabq_coul_F, ic->tabq_size, 32);
@@ -1943,7 +1943,7 @@ void init_interaction_const_tables(FILE                *fp,
                     1/ic->tabq_scale, ic->tabq_size);
         }
     }
-    if (ic->eeltype == eelZMM)
+    if (ic->eeltype == eelZMM && ic->zmm_alpha != 0.0)
     {
         init_ewald_f_table(ic, rtab);
 
@@ -2111,6 +2111,10 @@ init_interaction_const(FILE                       *fp,
     {
         ic->zmm_degree = fr->zmm_degree;
         ic->zmm_alpha = fr->zmm_alpha;
+        ic->zmm_c0 = fr->zmm_c0;
+        ic->zmm_c2 = fr->zmm_c2;
+        ic->zmm_c4 = fr->zmm_c4;
+        ic->zmm_c6 = fr->zmm_c6;
     }
 
     if (fp != NULL)
@@ -2640,7 +2644,6 @@ void init_forcerec(FILE              *fp,
         case eelPMESWITCH:
         case eelPMEUSER:
         case eelPMEUSERSWITCH:
-        case eelZMM:
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_CUBICSPLINETABLE;
             break;
 
@@ -2648,6 +2651,11 @@ void init_forcerec(FILE              *fp,
         case eelP3M_AD:
         case eelEWALD:
             fr->nbkernel_elec_interaction = GMX_NBKERNEL_ELEC_EWALD;
+            break;
+
+        case eelZMM:
+            fr->nbkernel_elec_interaction = (fr->zmm_alpha == 0.0 ?
+                    GMX_NBKERNEL_ELEC_ZMM : GMX_NBKERNEL_ELEC_CUBICSPLINETABLE);
             break;
 
         default:

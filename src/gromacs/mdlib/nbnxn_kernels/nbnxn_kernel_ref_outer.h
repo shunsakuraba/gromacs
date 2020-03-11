@@ -55,6 +55,9 @@
 #ifdef CALC_COUL_RF
 #define NBK_FUNC_NAME2(ljt, feg) nbnxn_kernel ## _ElecRF ## ljt ## feg ## _ref
 #endif
+#ifdef CALC_COUL_ZMM
+#define NBK_FUNC_NAME2(ljt, feg) nbnxn_kernel ## _ElecZMM ## ljt ## feg ## _ref
+#endif
 #ifdef CALC_COUL_TAB
 #ifndef VDW_CUTOFF_CHECK
 #define NBK_FUNC_NAME2(ljt, feg) nbnxn_kernel ## _ElecQSTab ## ljt ## feg ## _ref
@@ -156,6 +159,14 @@ NBK_FUNC_NAME(_VgrpF)
     real       k_rf, c_rf;
 #endif
 #endif
+
+#ifdef CALC_COUL_ZMM
+    real       k_zmm_2, k_zmm_4, k_zmm_6;
+#ifdef CALC_ENERGIES
+    real       c_zmm_0, c_zmm_2, c_zmm_4, c_zmm_6;
+#endif
+#endif
+
 #ifdef CALC_COUL_TAB
 #ifdef CALC_ENERGIES
     real       halfsp;
@@ -198,6 +209,19 @@ NBK_FUNC_NAME(_VgrpF)
     c_rf = ic->c_rf;
 #endif
 #endif
+
+#ifdef CALC_COUL_ZMM
+    k_zmm_2 = -2*ic->zmm_c2;
+    k_zmm_4 = -4*ic->zmm_c4;
+    k_zmm_6 = -6*ic->zmm_c6;
+#ifdef CALC_ENERGIES
+    c_zmm_0 = ic->zmm_c0;
+    c_zmm_2 = ic->zmm_c2;
+    c_zmm_4 = ic->zmm_c4;
+    c_zmm_6 = ic->zmm_c6;
+#endif
+#endif
+
 #ifdef CALC_COUL_TAB
 #ifdef CALC_ENERGIES
     halfsp = 0.5/ic->tabq_scale;
@@ -292,6 +316,9 @@ NBK_FUNC_NAME(_VgrpF)
 
 #ifdef CALC_COUL_RF
             Vc_sub_self = 0.5*c_rf;
+#endif
+#ifdef CALC_COUL_ZMM
+            Vc_sub_self = -0.5*c_zmm_0;
 #endif
 #ifdef CALC_COUL_TAB
 #if GMX_DOUBLE

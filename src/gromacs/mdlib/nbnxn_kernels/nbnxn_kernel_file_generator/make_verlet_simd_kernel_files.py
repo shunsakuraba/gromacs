@@ -101,6 +101,7 @@ def read_kernel_template(filename):
 # nbnxn_kernel_simd_template.c.pre
 ElectrostaticsDict = collections.OrderedDict()
 ElectrostaticsDict['ElecRF'] = { 'define' : '#define CALC_COUL_RF' }
+ElectrostaticsDict['ElecZMM'] = { 'define' : '#define CALC_COUL_ZMM' }
 ElectrostaticsDict['ElecQSTab'] = { 'define' : '#define CALC_COUL_TAB' }
 ElectrostaticsDict['ElecQSTabTwinCut'] = { 'define' : '#define CALC_COUL_TAB\n#define VDW_CUTOFF_CHECK /* Use twin-range cut-off */' }
 ElectrostaticsDict['ElecEw'] = { 'define' : '#define CALC_COUL_EWALD' }

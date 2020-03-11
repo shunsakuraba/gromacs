@@ -60,7 +60,7 @@
 /*! \brief Kinds of electrostatic treatments in SIMD Verlet kernels
  */
 enum {{
-    coulktRF, coulktTAB, coulktTAB_TWIN, coulktEWALD, coulktEWALD_TWIN, coulktNR
+    coulktRF, coulktZMM, coulktTAB, coulktTAB_TWIN, coulktEWALD, coulktEWALD_TWIN, coulktNR
 }};
 
 /*! \brief Kinds of Van der Waals treatments in SIMD Verlet kernels

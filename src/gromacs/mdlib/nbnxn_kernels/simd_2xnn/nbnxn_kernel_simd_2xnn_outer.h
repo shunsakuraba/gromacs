@@ -87,6 +87,13 @@
 #endif
 #endif
 
+#ifdef CALC_COUL_ZMM
+    SimdReal      zmmf_2_S, zmmf_4_S, zmmf_6_S;
+#ifdef CALC_ENERGIES
+    SimdReal      zmmp_0_S, zmmp_2_S, zmmp_4_S, zmmp_6_S;
+#endif
+#endif
+
 #ifdef CALC_COUL_TAB
     /* Coulomb table variables */
     SimdReal          invtsp_S;
@@ -217,6 +224,19 @@
 #ifdef CALC_ENERGIES
     hrc_3_S  = SimdReal(ic->k_rf);
     moh_rc_S = SimdReal(-ic->c_rf);
+#endif
+#endif
+
+#ifdef CALC_COUL_ZMM
+    /* Constants for ZMM */
+    zmmf_2_S = SimdReal(-2*ic->zmm_c2);
+    zmmf_4_S = SimdReal(-4*ic->zmm_c4);
+    zmmf_6_S = SimdReal(-6*ic->zmm_c6);
+#ifdef CALC_ENERGIES
+    zmmp_0_S = SimdReal(ic->zmm_c0);
+    zmmp_2_S = SimdReal(ic->zmm_c2);
+    zmmp_4_S = SimdReal(ic->zmm_c4);
+    zmmp_6_S = SimdReal(ic->zmm_c6);
 #endif
 #endif
 
@@ -424,6 +444,9 @@
 
 #ifdef CALC_COUL_RF
                 Vc_sub_self = 0.5*ic->c_rf;
+#endif
+#ifdef CALC_COUL_ZMM
+                Vc_sub_self = 0.5*ic->zmm_c0;
 #endif
 #ifdef CALC_COUL_TAB
 #ifdef TAB_FDV0

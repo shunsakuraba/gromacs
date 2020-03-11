@@ -111,6 +111,7 @@ typedef struct {
     /* Constants for the zero-multipole methods */
     int zmm_degree;
     real zmm_alpha;
+    real zmm_c0, zmm_c2, zmm_c4, zmm_c6;
 
     /* Force/energy interpolation tables, linear in force, quadratic in V */
     real  tabq_scale;

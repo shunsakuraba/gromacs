@@ -1,7 +1,7 @@
 /*
  * This file is part of the GROMACS molecular simulation package.
  *
- * Copyright (c) 2012,2013,2014,2015,2016,2017, by the GROMACS development team, led by
+ * Copyright (c) 2012,2013,2014,2015, by the GROMACS development team, led by
  * Mark Abraham, David van der Spoel, Berk Hess, and Erik Lindahl,
  * and including many others, as listed in the AUTHORS file in the
  * top-level source directory and at http://www.gromacs.org.
@@ -69,7 +69,7 @@
 /*! \brief Kinds of electrostatic treatments in SIMD Verlet kernels
  */
 enum {
-    coulktRF, coulktTAB, coulktTAB_TWIN, coulktEWALD, coulktEWALD_TWIN, coulktNR
+    coulktRF, coulktZMM, coulktTAB, coulktTAB_TWIN, coulktEWALD, coulktEWALD_TWIN, coulktNR
 };
 
 /*! \brief Kinds of Van der Waals treatments in SIMD Verlet kernels
@@ -91,6 +91,14 @@ static p_nbk_func_noener p_nbk_noener[coulktNR][vdwktNR] =
         nbnxn_kernel_ElecRF_VdwLJFSw_F_2xnn,
         nbnxn_kernel_ElecRF_VdwLJPSw_F_2xnn,
         nbnxn_kernel_ElecRF_VdwLJEwCombGeom_F_2xnn,
+    },
+    {
+        nbnxn_kernel_ElecZMM_VdwLJCombGeom_F_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJCombLB_F_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJ_F_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJFSw_F_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJPSw_F_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJEwCombGeom_F_2xnn,
     },
     {
         nbnxn_kernel_ElecQSTab_VdwLJCombGeom_F_2xnn,
@@ -137,6 +145,14 @@ static p_nbk_func_ener p_nbk_ener[coulktNR][vdwktNR] =
         nbnxn_kernel_ElecRF_VdwLJEwCombGeom_VF_2xnn,
     },
     {
+        nbnxn_kernel_ElecZMM_VdwLJCombGeom_VF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJCombLB_VF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJ_VF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJFSw_VF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJPSw_VF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJEwCombGeom_VF_2xnn,
+    },
+    {
         nbnxn_kernel_ElecQSTab_VdwLJCombGeom_VF_2xnn,
         nbnxn_kernel_ElecQSTab_VdwLJCombLB_VF_2xnn,
         nbnxn_kernel_ElecQSTab_VdwLJ_VF_2xnn,
@@ -179,6 +195,14 @@ static p_nbk_func_ener p_nbk_energrp[coulktNR][vdwktNR] =
         nbnxn_kernel_ElecRF_VdwLJFSw_VgrpF_2xnn,
         nbnxn_kernel_ElecRF_VdwLJPSw_VgrpF_2xnn,
         nbnxn_kernel_ElecRF_VdwLJEwCombGeom_VgrpF_2xnn,
+    },
+    {
+        nbnxn_kernel_ElecZMM_VdwLJCombGeom_VgrpF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJCombLB_VgrpF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJ_VgrpF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJFSw_VgrpF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJPSw_VgrpF_2xnn,
+        nbnxn_kernel_ElecZMM_VdwLJEwCombGeom_VgrpF_2xnn,
     },
     {
         nbnxn_kernel_ElecQSTab_VdwLJCombGeom_VgrpF_2xnn,
@@ -277,7 +301,7 @@ nbnxn_kernel_simd_2xnn(nbnxn_pairlist_set_t      gmx_unused *nbl_list,
     int                nnbl;
     nbnxn_pairlist_t **nbl;
     int                coulkt, vdwkt = 0;
-    int                nb, nthreads gmx_unused;
+    int                nb, nthreads;
 
     nnbl = nbl_list->nnbl;
     nbl  = nbl_list->nbl;
@@ -288,13 +312,20 @@ nbnxn_kernel_simd_2xnn(nbnxn_pairlist_set_t      gmx_unused *nbl_list,
     }
     else if (ic->eeltype == eelZMM)
     {
-        if (ic->rcoulomb == ic->rvdw)
+        if (ic->zmm_alpha == 0.0)
         {
-            coulkt = coulktTAB;
+            coulkt = coulktZMM;
         }
         else
         {
-            coulkt = coulktTAB_TWIN;
+            if (ic->rcoulomb == ic->rvdw)
+            {
+                coulkt = coulktTAB;
+            }
+            else
+            {
+                coulkt = coulktTAB_TWIN;
+            }
         }
     }
     else
