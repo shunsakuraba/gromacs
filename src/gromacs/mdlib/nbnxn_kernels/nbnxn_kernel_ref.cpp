@@ -78,6 +78,28 @@
 #undef LJ_EWALD
 #undef CALC_COUL_RF
 
+/* Zero-multiple summation (with alpha = 0) kernels */
+#define CALC_COUL_ZMM
+#define LJ_CUT
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_CUT
+#define LJ_FORCE_SWITCH
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_FORCE_SWITCH
+#define LJ_POT_SWITCH
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_POT_SWITCH
+#define LJ_EWALD
+#define LJ_CUT
+#define LJ_EWALD_COMB_GEOM
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_EWALD_COMB_GEOM
+#define LJ_EWALD_COMB_LB
+#include "gromacs/mdlib/nbnxn_kernels/nbnxn_kernel_ref_includes.h"
+#undef LJ_EWALD_COMB_LB
+#undef LJ_CUT
+#undef LJ_EWALD
+#undef CALC_COUL_ZMM
 
 /* Tabulated exclusion interaction electrostatics kernels */
 #define CALC_COUL_TAB

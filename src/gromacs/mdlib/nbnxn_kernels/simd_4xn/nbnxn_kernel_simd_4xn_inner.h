@@ -500,6 +500,21 @@
 #endif
 #endif
 
+#ifdef CALC_COUL_ZMM
+    /* Electrostatic interactions with ZMM */
+    frcoul_S0   = qq_S0 * fma(rsq_S0, fma(rsq_S0, fma(rsq_S0, zmmf_6_S, zmmf_4_S), zmmf_2_S), rinv_ex_S0);
+    frcoul_S1   = qq_S1 * fma(rsq_S1, fma(rsq_S1, fma(rsq_S1, zmmf_6_S, zmmf_4_S), zmmf_2_S), rinv_ex_S1);
+    frcoul_S2   = qq_S2 * fma(rsq_S2, fma(rsq_S2, fma(rsq_S2, zmmf_6_S, zmmf_4_S), zmmf_2_S), rinv_ex_S2);
+    frcoul_S3   = qq_S3 * fma(rsq_S3, fma(rsq_S3, fma(rsq_S3, zmmf_6_S, zmmf_4_S), zmmf_2_S), rinv_ex_S3);
+
+#ifdef CALC_ENERGIES
+    vcoul_S0    = qq_S0 * (rinv_ex_S0 + fma(rsq_S0, fma(rsq_S0, fma(rsq_S0, zmmp_6_S, zmmp_4_S), zmmp_2_S), zmmp_0_S));
+    vcoul_S1    = qq_S1 * (rinv_ex_S1 + fma(rsq_S1, fma(rsq_S1, fma(rsq_S1, zmmp_6_S, zmmp_4_S), zmmp_2_S), zmmp_0_S));
+    vcoul_S2    = qq_S2 * (rinv_ex_S2 + fma(rsq_S2, fma(rsq_S2, fma(rsq_S2, zmmp_6_S, zmmp_4_S), zmmp_2_S), zmmp_0_S));
+    vcoul_S3    = qq_S3 * (rinv_ex_S3 + fma(rsq_S3, fma(rsq_S3, fma(rsq_S3, zmmp_6_S, zmmp_4_S), zmmp_2_S), zmmp_0_S));
+#endif
+#endif
+
 #ifdef CALC_COUL_EWALD
     /* We need to mask (or limit) rsq for the cut-off,
      * as large distances can cause an overflow in gmx_pmecorrF/V.

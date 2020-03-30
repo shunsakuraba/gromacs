@@ -303,6 +303,15 @@
 #endif
 #endif
 
+#ifdef CALC_COUL_ZMM
+            fcoul  = qq*(interact*rinv*rinvsq + k_zmm_2 + rsq * (k_zmm_4 + rsq * k_zmm_6));
+            /* 8 flop for ZMM force */
+#ifdef CALC_ENERGIES
+            vcoul  = qq*(interact*rinv + c_zmm_0 + rsq * (c_zmm_2 + rsq * (c_zmm_4 + rsq * c_zmm_6)));
+            /* 9 flop for ZMM energy */
+#endif
+#endif
+
 #ifdef CALC_COUL_TAB
             rs     = rsq*rinv*ic->tabq_scale;
             ri     = int(rs);

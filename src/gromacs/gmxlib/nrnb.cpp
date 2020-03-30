@@ -103,6 +103,8 @@ static const t_nrnb_data nbdata[eNRNB] = {
     { "NxN QSTab Elec. + LJ [V&F]",     59 },
     { "NxN Ewald Elec. + LJ [F]",       66 }, /* nbnxn kernel LJ+Ewald, no en */
     { "NxN Ewald Elec. + LJ [V&F]",    107 },
+    { "NxN ZMM Elec. + LJ [F]",         42 }, /* nbnxn kernel LJ+ZMM, no en */
+    { "NxN ZMM Elec. + LJ [V&F]",       60 },
     { "NxN LJ [F]",                     33 }, /* nbnxn kernel LJ, no ener */
     { "NxN LJ [V&F]",                   43 },
     { "NxN RF Electrostatics [F]",      31 }, /* nbnxn kernel RF, no ener */
@@ -111,6 +113,8 @@ static const t_nrnb_data nbdata[eNRNB] = {
     { "NxN QSTab Elec. [V&F]",          41 },
     { "NxN Ewald Elec. [F]",            61 }, /* nbnxn kernel Ewald, no ener */
     { "NxN Ewald Elec. [V&F]",          84 },
+    { "NxN ZMM Elec. [F]",              35 }, /* nbnxn kernel ZMM, no ener */
+    { "NxN ZMM Elec. [V&F]",            42 },
     /* The switch function flops should be added to the LJ kernels above */
     { "NxN LJ add F-switch [F]",        12 }, /* extra cost for LJ F-switch */
     { "NxN LJ add F-switch [V&F]",      22 },

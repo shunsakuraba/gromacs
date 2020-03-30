@@ -150,9 +150,13 @@ nbnxn_kernel_cpu(nonbonded_verlet_group_t  *nbvg,
     }
     else if(ic->eeltype == eelZMM)
     {
-        if (ic->rcoulomb == ic->rvdw)
+        if(ic->zmm_alpha == 0.0)
         {
-            coulkt = coulktTAB;
+            coulkt = coulktZMM;
+        }
+        else if (ic->rcoulomb == ic->rvdw)
+        {
+                coulkt = coulktTAB;
         }
         else
         {
