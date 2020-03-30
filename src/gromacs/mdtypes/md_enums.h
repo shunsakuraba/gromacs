@@ -638,6 +638,7 @@ enum gmx_nbkernel_elec
     GMX_NBKERNEL_ELEC_CUBICSPLINETABLE,
     GMX_NBKERNEL_ELEC_GENERALIZEDBORN,
     GMX_NBKERNEL_ELEC_EWALD,
+    GMX_NBKERNEL_ELEC_ZMM,
     GMX_NBKERNEL_ELEC_NR
 };
 //! String corresponding to electrostatics kernels

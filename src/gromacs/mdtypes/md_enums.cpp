@@ -257,7 +257,7 @@ const char *gmx_nblist_interaction_names[GMX_NBLIST_INTERACTION_NR+1] = {
 
 const char *gmx_nbkernel_elec_names[GMX_NBKERNEL_ELEC_NR+1] =
 {
-    "None", "Coulomb", "Reaction-Field", "Cubic-Spline-Table", "Generalized-Born", "Ewald", nullptr
+    "None", "Coulomb", "Reaction-Field", "Cubic-Spline-Table", "Generalized-Born", "Ewald", "Zero-Multipole", nullptr
 };
 
 const char *gmx_nbkernel_vdw_names[GMX_NBKERNEL_VDW_NR+1] =
